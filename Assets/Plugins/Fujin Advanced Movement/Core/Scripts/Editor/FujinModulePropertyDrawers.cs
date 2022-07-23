@@ -1308,27 +1308,6 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUILayout.BeginVertical(EditorStyles.helpBox);
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
-        GUILayout.Label("Slopes");
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin);
-        module.slopeAngle = EditorGUILayout.Slider("Max Slope Angle", module.slopeAngle, 0, 90);
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin);
-        module.slopeForce = EditorGUILayout.FloatField("Downward Slope Force", Mathf.Max(module.slopeForce, 0));
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
-        GUILayout.Space(5);
-        GUILayout.EndVertical();
-        GUILayout.BeginVertical(EditorStyles.helpBox);
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin);
         GUILayout.Label("Wall Stick");
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();

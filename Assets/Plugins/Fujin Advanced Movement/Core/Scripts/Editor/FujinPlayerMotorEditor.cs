@@ -807,6 +807,13 @@ public class FujinPlayerMotorEditor : Editor
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        GUILayout.Label("Position");
+        EditorGUILayout.Vector3Field("", motor.Position);
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
         GUILayout.Space(10);
 
         GUILayout.BeginHorizontal();

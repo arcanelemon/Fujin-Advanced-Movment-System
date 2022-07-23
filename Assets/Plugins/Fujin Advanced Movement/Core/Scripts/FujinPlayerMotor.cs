@@ -51,6 +51,7 @@ namespace Fujin
         #region Debug
 
         public Vector3 Velocity => previousVelocity;
+        public Vector3 Position => previousPosition;
         public bool Grounded => grounded;
         public float NormalAngle => normalAngle;
         public MovementState State => movementState;
@@ -121,6 +122,7 @@ namespace Fujin
         float defaultFOV;
         float FOVsmoothing = 5;
         float tiltRotation;
+        float slideDirection;
         float poundHeight;
         float leanDirection;
         float grappleDistance;
@@ -133,6 +135,8 @@ namespace Fujin
         Vector2 cameraOffset;
         Vector3 normal;
         Vector3 previousVelocity;
+        Vector3 previousPosition;
+        Vector3 previousSlidePosition;
         Vector3 dashDirection;
         Vector3 poundOrigin;
         Vector3 grapplePoint;
@@ -1094,6 +1098,7 @@ namespace Fujin
             targetFOV = defaultFOV * 1.1f;
             targetHeight = defaultHeight * slide.height;
 
+            previousSlidePosition = rb.position;
             rb.AddForce(Vector3.ProjectOnPlane(transform.forward, normal) * slide.force, ForceMode.Impulse);
             movementState = MovementState.Sliding;
         }
@@ -1104,12 +1109,23 @@ namespace Fujin
         /// </summary>
         void Slide()
         {
-            // Slow down
-            if (!slide.infinite)
-                rb.AddForce(-rb.velocity.normalized * slide.friction * 100);
+            if (!grounded)
+                return;
 
             // Slide Control
-            rb.MovePosition(rb.position + (transform.right * moveInputs.x) * rb.velocity.magnitude * slide.control * d);
+            if (moveInputs.x != 0)
+            {
+                rb.velocity -= transform.right * slideDirection * rb.velocity.magnitude;
+                slideDirection = Mathf.Lerp(slideDirection, moveInputs.x, (Mathf.Exp(slide.control) - 1) * 10 * d);
+                Vector3 control = transform.right * slideDirection * rb.velocity.magnitude;
+                rb.velocity += control;
+            }
+
+            // Slide friction
+            Vector3 friction = slide.infinite ? Vector3.zero : -rb.velocity.normalized * slide.friction;
+            rb.velocity += friction; 
+
+            //rb.MovePosition(rb.position + (transform.right * moveInputs.x) * rb.velocity.magnitude * slide.control * d);
 
             // Slide down slopes
             if (normalAngle > 0)
@@ -1480,6 +1496,7 @@ namespace Fujin
 
             this.sprintInput = sprint;
             this.autoRunInput = autoRun;
+            slideDirection = 0;
 
             if (sprint)
                 Sprint();
@@ -1685,20 +1702,27 @@ namespace Fujin
 
                     if (slideInput || movementState == MovementState.Sliding)
                     {
-                        float slideAngle = Vector3.Angle(previousVelocity.normalized, -Vector3.up);
+                        if (Vector3.Distance(rb.position, previousSlidePosition) < 1f)
+                            return;
 
                         Vector3 localVelocity = transform.InverseTransformDirection(previousVelocity);
                         localVelocity = new Vector3(Mathf.Abs(localVelocity.x), Mathf.Abs(localVelocity.y), Mathf.Abs(localVelocity.z));
                         float additionalSlideForce = localVelocity.z > localVelocity.y ? localVelocity.z : localVelocity.y;
+                        float slideAngle = Vector3.Angle(previousVelocity.normalized, -Vector3.up);
+                        rb.AddForce(Vector3.ProjectOnPlane(transform.forward * (90 / slideAngle), normal) * additionalSlideForce);
 
-                        if (slideAngle > 0)
-                            rb.AddForce(transform.forward * additionalSlideForce * 1 / slideAngle);
+                        //rb.AddForce(Vector3.ProjectOnPlane(transform.forward *  (90 / slideAngle), normal) * additionalSlideForce);
 
-                        if (slideInput)
-                        {
-                            rb.velocity = new Vector3(previousVelocity.x, 0, previousVelocity.z);
+                        //if (slideInput)
+                        //{
+                        //    //rb.velocity = new Vector3(previousVelocity.x, 0, previousVelocity.z);
+                        //    StartSlide();
+                        //}
+
+                        if (movementState != MovementState.Sliding)
                             StartSlide();
-                        }
+
+                        previousSlidePosition = rb.position;
                     }
 
                     if (movementState == MovementState.Pounding)
@@ -1992,6 +2016,7 @@ namespace Fujin
             #endregion Counter Physics
 
             previousVelocity = rb.velocity;
+            previousPosition = rb.position;
         }
 
         /// <summary>
