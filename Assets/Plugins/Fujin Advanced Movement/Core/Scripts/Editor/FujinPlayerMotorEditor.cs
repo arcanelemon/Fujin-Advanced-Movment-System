@@ -144,17 +144,11 @@ public class FujinPlayerMotorEditor : Editor
         if (FoldoutButton("Features", ref motor.featuresFoldout))
             DrawFeatures();
 
-        GUILayout.Space(5);
-
         if (FoldoutButton("Input", ref motor.inputFoldout)) 
             DrawInput();
 
-        GUILayout.Space(5);
-
         if (FoldoutButton("Config", ref motor.configFoldout))
             DrawSettings();
-
-        GUILayout.Space(5);
 
         if (EditorGUI.EndChangeCheck())
             serializedObject.ApplyModifiedProperties();

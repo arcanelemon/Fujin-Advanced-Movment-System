@@ -99,6 +99,7 @@ namespace Fujin
         bool headspaceAvailable;
         bool controlFOV = true;
         bool controlHeight = true;
+        bool canJump = false;
         bool canPound = true;
         bool returnGrapple;
 
@@ -114,7 +115,7 @@ namespace Fujin
         float heightOffset;
         float targetHeight;
         float defaultHeight;
-        float heightSmoothing = 5;
+        float heightSmoothing = 1;
         float FOV;
         float targetFOV;
         float defaultFOV;
@@ -237,13 +238,8 @@ namespace Fujin
             if (!jump.enable)
                 return;
 
-            if (grounded || (jump.enableWallJump && onWall))
+            if (grounded || (jump.enableWallJump && onWall) || numJumps > 0)
                 jumpInput = true;
-            else if (numJumps > 0)
-            {
-                numJumps--;
-                jumpInput = true;
-            }
         }
 
         void OnCrouchPress(InputAction.CallbackContext context)
@@ -754,9 +750,7 @@ namespace Fujin
             targetFOV = FOV;
             defaultFOV = FOV;
             collisionExclusionMask = ~LayerMask.GetMask("Player");
-
-            if (physics.customGravity)
-                rb.useGravity = false;
+            rb.useGravity = false;
 
             if (grapple.enable && grapple.prefab.GetComponent<LineRenderer>() == null) // Check grapple
             {
@@ -961,38 +955,13 @@ namespace Fujin
         void Jump()
         {
             float force = jump.force;
-            Vector3 direction;
 
             #region Double Jump
 
-            if (!grounded && jump.enableDoubleJumps) // Reset velocity based on input for double jump
+            //  Double jump if not grounded and enabled
+            if (jump.enableDoubleJumps && (!grounded && !canJump))
             {
-                Vector3 localVelocity = transform.InverseTransformDirection(rb.velocity);
-                direction = localVelocity.normalized;
-
-                if (moveInputs != Vector2.zero)
-                {
-                    Vector3 temp = localVelocity;
-
-                    // Redirect velocitiees
-                    if (moveInputs.x != 0 && Mathf.Abs(localVelocity.z) > Mathf.Abs(localVelocity.x))
-                        temp.x = localVelocity.z * moveInputs.x;
-                    else if ((direction.x > 0.1 && moveInputs.x < -0.1) || (direction.x < -0.1 && moveInputs.x > 0.1))
-                        temp.x = -localVelocity.x;
-                    else if (moveInputs.x == 0)
-                        temp.x = 0;
-
-                    if (moveInputs.y != 0 && Mathf.Abs(localVelocity.x) > Mathf.Abs(localVelocity.z))
-                        temp.z = localVelocity.x * moveInputs.y;
-                    else if ((direction.z > 0.1 && moveInputs.y < -0.1) || (direction.z < -0.1 && moveInputs.y > 0.1))
-                        temp.z = -localVelocity.z;
-                    else if (moveInputs.y == 0)
-                        temp.z = 0;
-
-                    localVelocity = temp;
-                }
-
-                rb.velocity = transform.TransformDirection(localVelocity);
+                numJumps--;
                 force = jump.doubleJumpforce;
             }
 
@@ -1007,7 +976,7 @@ namespace Fujin
             if (movementState == MovementState.Crouching || movementState == MovementState.Sliding)
                 Stand();
 
-            direction = Vector3.up;
+            Vector3 direction = Vector3.up;
 
             if (jump.enableWallJump && onWall)
             {
@@ -1043,8 +1012,40 @@ namespace Fujin
             rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
             rb.AddForce(direction * force, ForceMode.Impulse);
             jumpInput = false;
+            canJump = false;
 
             #endregion Apply Force
+        }
+
+        void Lurch()
+        {
+            Vector3 localVelocity = transform.InverseTransformDirection(rb.velocity);
+            Vector3 direction = localVelocity.normalized;
+
+            // Redirect velocity based on input for
+            if (moveInputs != Vector2.zero)
+            {
+                Vector3 temp = localVelocity;
+
+                // Redirect velocitiees
+                if (moveInputs.x != 0 && Mathf.Abs(localVelocity.z) > Mathf.Abs(localVelocity.x))
+                    temp.x = Mathf.Abs(localVelocity.z) * moveInputs.x;
+                else if ((direction.x > 0.1 && moveInputs.x < -0.1) || (direction.x < -0.1 && moveInputs.x > 0.1))
+                    temp.x = -localVelocity.x;
+                else if (moveInputs.x == 0)
+                    temp.x = 0;
+
+                if (moveInputs.y != 0 && Mathf.Abs(localVelocity.x) > Mathf.Abs(localVelocity.z))
+                    temp.z = Mathf.Abs(localVelocity.x) * moveInputs.y;
+                else if ((direction.z > 0.1 && moveInputs.y < -0.1) || (direction.z < -0.1 && moveInputs.y > 0.1))
+                    temp.z = -localVelocity.z;
+                else if (moveInputs.y == 0)
+                    temp.z = 0;
+
+                localVelocity = temp;
+            }
+
+            rb.velocity = transform.TransformDirection(localVelocity);
         }
 
         /// <summary>
@@ -1633,7 +1634,6 @@ namespace Fujin
             CheckGround();
             CheckHeight();
 
-            onWall = true;
             if (CheckStep())
                 return;
 
@@ -1704,11 +1704,12 @@ namespace Fujin
                     if (movementState == MovementState.Pounding)
                         EndPound();
 
-                    slideInput = false;
+                    //slideInput = false;
 
-                    lastClimbCollider = null;
+                    canJump = true;
                     canPound = true;
                     numJumps = jump.doubleJumpCount;
+                    lastClimbCollider = null;
                     grounded = true;
                 }
 
@@ -1718,10 +1719,13 @@ namespace Fujin
                     Vector3 displayVector = Vector3.ProjectOnPlane(transform.forward, normal);
                     Debug.DrawLine(spherePoint.point, spherePoint.point + displayVector, Color.cyan, d);
                 }
+
+                StopJumpGraceCoroutine();
             }
-            else
+            else if (grounded)
             {
                 grounded = false;
+                StartYieldJumpGraceCoroutine();
             }
         }
 
@@ -1823,6 +1827,11 @@ namespace Fujin
         /// Checks for collisions at step height. Projects the player along step normal accordingly.
         /// </summary>
         bool CheckStep() 
+        {
+            return false;
+        }
+
+        bool CheckWall() 
         {
             return false;
         }
@@ -1937,11 +1946,6 @@ namespace Fujin
             return onWall;
         }
 
-        void CheckWall() 
-        {
-        
-        }
-
         #endregion Collision
 
         #region Physics
@@ -1959,26 +1963,9 @@ namespace Fujin
             // Gravity
             if ((int)movementState <= 6) // gravity states
             {
-                if (physics.customGravity)
-                {
-                    if (!grounded && !onStep)
-                        rb.AddForce(Vector3.down * physics.gravityMultiplier);
-
-                }
-                else
-                {
-                    if (!grounded)
-                    {
-                        rb.useGravity = true;
-                    }
-                    else if (grounded || onStep)
-                    {
-                        rb.useGravity = false;
-                    }
-                }
+                if (!grounded && !onStep)
+                    rb.AddForce(Vector3.down * (physics.gravityMultiplier - (onWall? physics.gravityMultiplier * physics.wallStick : 0)));
             }
-            else if (!physics.customGravity)
-                rb.useGravity = false;
 
             // Slopes
             if (grounded && normalAngle > physics.slopeAngle)
@@ -2036,7 +2023,66 @@ namespace Fujin
 
         #region Coroutines
 
+        IEnumerator wallStickCoroutine;
+        IEnumerator jumpGraceCoroutine;
         IEnumerator exitClimbCoroutine;
+
+        /// <summary>
+        /// Restarts the coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StartWallStickCoroutine()
+        {
+            StopWallStickCoroutine();
+            wallStickCoroutine = YieldWallStickTime();
+            StartCoroutine(wallStickCoroutine);
+        }
+
+        /// <summary>
+        /// Stops the current coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StopWallStickCoroutine()
+        {
+            if (exitClimbCoroutine != null)
+                StopCoroutine(wallStickCoroutine);
+        }
+
+        /// <summary>
+        /// Waits for <code>FujinClimbModule.duration</code> and exits climb.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator YieldWallStickTime()
+        {
+            yield return new WaitForSeconds(physics.wallStickDuration);
+        }
+        
+        /// <summary>
+        /// Restarts the coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StartYieldJumpGraceCoroutine()
+        {
+            StopJumpGraceCoroutine();
+            jumpGraceCoroutine = YieldJumpGraceTime();
+            StartCoroutine(jumpGraceCoroutine);
+        }
+
+        /// <summary>
+        /// Stops the current coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StopJumpGraceCoroutine()
+        {
+            if (jumpGraceCoroutine != null)
+                StopCoroutine(jumpGraceCoroutine);
+        }
+
+        /// <summary>
+        /// Waits for <code>FujinClimbModule.duration</code> and exits climb.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator YieldJumpGraceTime()
+        {
+            yield return new WaitForSeconds(jump.gracePeriod);
+            canJump = false;
+        }
 
         /// <summary>
         /// YieldDashTime

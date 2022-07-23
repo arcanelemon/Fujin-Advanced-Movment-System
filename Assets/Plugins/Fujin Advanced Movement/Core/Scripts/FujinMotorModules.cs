@@ -36,10 +36,15 @@ namespace Fujin
     {
         public int doubleJumpCount;
         public float force;
+        public float gracePeriod;
         public float doubleJumpforce;
         public bool enableDoubleJumps;
         public float wallJumpforce;
         public bool enableWallJump;
+        public float lurchPeriod;
+        public float lurchStrength;
+        public float lurchRedirect;
+        public bool enableLurch;
     }
 
     [System.Serializable]
@@ -176,15 +181,20 @@ namespace Fujin
     [System.Serializable]
     public class FujinPhysicsModule : FujinMotorModule
     {
-        public bool customGravity;
         public float gravityMultiplier;
-        public float airDrag;
         public bool limitVelocity;
         public Vector3 maxVelocity;
+        public float airDrag;
+        public float airTurnRate;
+        public bool turnRateFromVelocity;
         public float stepHeight;
         public float stepDepth;
         public float slopeAngle;
         public float slopeForce;
+        public float wallStick;
+        public bool useWallStickDuration;
+        public float wallStickDuration;
+        public float wallStickTilt;
     }
 
     [System.Serializable]
