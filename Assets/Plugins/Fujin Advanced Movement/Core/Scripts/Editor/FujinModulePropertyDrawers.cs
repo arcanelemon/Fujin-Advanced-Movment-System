@@ -137,27 +137,27 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
             GUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.enableLurch = GUILayout.Toggle(module.enableLurch, "Drift");
+            module.enableDrift = GUILayout.Toggle(module.enableDrift, "Drift");
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
-            if (module.enableLurch)
+            if (module.enableDrift)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.lurchPeriod = EditorGUILayout.FloatField("Drift Period", Mathf.Max(0, module.lurchPeriod));
+                module.driftPeriod = EditorGUILayout.FloatField("Drift Period", Mathf.Max(0, module.driftPeriod));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.lurchStrength = EditorGUILayout.Slider("Drift Strength", module.lurchStrength, 0, 1);
+                module.driftStrength = EditorGUILayout.Slider("Drift Strength", module.driftStrength, 0, 1);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.lurchRedirect = EditorGUILayout.Slider("Drift Redirect", module.lurchRedirect, 0, 1);
+                module.driftRedirect = EditorGUILayout.Slider("Drift Redirect", module.driftRedirect, 0, 1);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
                 GUILayout.Space(5);
@@ -1006,6 +1006,12 @@ public class FujinFreelookModuleDrawer : FujinModuleDrawer
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.lookResistance = EditorGUILayout.Slider("Look Resistance", module.lookResistance, 0, 1);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
             if (module.axis.x > 0)
             {
                 GUILayout.BeginHorizontal();
@@ -1089,6 +1095,12 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
             module.maxAngle = EditorGUILayout.FloatField("Max Grapple Angle", Mathf.Max(0, module.maxAngle));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.lookResistance = EditorGUILayout.Slider("Look Resistance", module.lookResistance, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1235,10 +1247,11 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUILayout.Space(margin);
         module.limitVelocity = EditorGUILayout.Toggle("Limit Max Velocity", module.limitVelocity);
         GUI.enabled = module.limitVelocity;
-        module.maxVelocity = EditorGUILayout.Vector3Field("", new Vector3(Mathf.Max(module.maxVelocity.x, 0), Mathf.Max(module.maxVelocity.y, 0), Mathf.Max(module.maxVelocity.z, 0)), GUILayout.MinWidth(0));
+        module.maxVelocity = EditorGUILayout.Vector2Field("", new Vector2(Mathf.Max(module.maxVelocity.x, 0), Mathf.Max(module.maxVelocity.y, 0)), GUILayout.MinWidth(0));
         GUI.enabled = true;
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
+
         GUILayout.Space(5);
         GUILayout.EndVertical();
 
@@ -1257,16 +1270,17 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
-        module.airTurnRate = EditorGUILayout.Slider("Air Turn Rate", module.airTurnRate, 0.01f, 1);
+        module.turnRateFromVelocity = EditorGUILayout.Toggle("Turn Rate from Velocity", module.turnRateFromVelocity);
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
+        GUI.enabled = !module.turnRateFromVelocity;
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
-        module.turnRateFromVelocity = EditorGUILayout.Toggle("Turn Rate from Velocity", module.turnRateFromVelocity);
-        GUI.enabled = true;
+        module.airTurnRate = EditorGUILayout.Slider("Air Turn Rate", module.airTurnRate, 0.01f, 1);
         GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
+        GUILayout.EndHorizontal(); 
+        GUI.enabled = true;
 
         GUILayout.Space(5);
         GUILayout.EndVertical();
@@ -1359,6 +1373,12 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         EditorGUILayout.Popup("Walls", 0, new string[] { });
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        EditorGUILayout.Popup("Exclude", 0, new string[] { });
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 

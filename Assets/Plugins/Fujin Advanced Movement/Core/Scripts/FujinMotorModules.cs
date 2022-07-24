@@ -41,10 +41,10 @@ namespace Fujin
         public bool enableDoubleJumps;
         public float wallJumpforce;
         public bool enableWallJump;
-        public float lurchPeriod;
-        public float lurchStrength;
-        public float lurchRedirect;
-        public bool enableLurch;
+        public float driftPeriod;
+        public float driftStrength;
+        public float driftRedirect;
+        public bool enableDrift;
     }
 
     [System.Serializable]
@@ -132,6 +132,16 @@ namespace Fujin
     }
 
     [System.Serializable]
+    public class FujinSwayModule : FujinMotorModule 
+    {
+        public float speed;
+        public Vector2 max;
+        public float idleAmount;
+        public float lookAmount;
+        public float fallAmount;
+    }
+
+    [System.Serializable]
     public class FujinAutorunModule : FujinMotorModule
     {
     }
@@ -154,6 +164,7 @@ namespace Fujin
         public float resetSpeed;
         public float horizontalAngle;
         public float verticalAngle;
+        public float lookResistance;
     }
 
     [System.Serializable]
@@ -176,6 +187,7 @@ namespace Fujin
         public float throwSpeed;
         public float speed;
         public float maxAngle;
+        public float lookResistance;
         public float cooldownTime;
         public GameObject prefab;
     }
@@ -185,7 +197,7 @@ namespace Fujin
     {
         public float gravityMultiplier;
         public bool limitVelocity;
-        public Vector3 maxVelocity;
+        public Vector2 maxVelocity;
         public float airDrag;
         public float airTurnRate;
         public bool turnRateFromVelocity;

@@ -101,6 +101,7 @@ namespace Fujin
         bool controlFOV = true;
         bool controlHeight = true;
         bool canJump = false;
+        bool jumpDrift = false;
         bool canPound = true;
         bool canGrapple = true;
         bool returnGrapple;
@@ -108,6 +109,7 @@ namespace Fujin
         float d;
         float yRot;
         float xRot;
+        float lookResistance;
         float currSpeed;
         float normalAngle;
         float groundCheckRadius = 0.49f;
@@ -169,12 +171,16 @@ namespace Fujin
         #region New Input
         void OnLookChange(InputAction.CallbackContext context)
         {
-            Look(context.ReadValue<Vector2>() * input.lookSensitivity);
+            Look(context.ReadValue<Vector2>() 
+                * (input.lookSensitivity - (input.lookSensitivity * lookResistance)) * 10 * d);
         }
 
         void OnMoveChange(InputAction.CallbackContext context)
         {
             moveInputs = context.ReadValue<Vector2>();
+
+            if (jump.enable && !grounded && jumpDrift)
+                JumpDrift();
         }
 
         void OnSprintPress(InputAction.CallbackContext context)
@@ -336,7 +342,7 @@ namespace Fujin
             if (!freelook.enable || !freelook.hold)
                 return;
 
-            freeLookInput = false;
+            freeLookInput = false; 
         }
 
         void OnSlowWalkPress(InputAction.CallbackContext context)
@@ -368,7 +374,10 @@ namespace Fujin
                 return;
 
             if (movementState == MovementState.Grappling)
+            {
                 EndGrapple();
+                ResetMovement();
+            }
             else if (movementState <= MovementState.SlowWalk && canGrapple)
                 StartGrapple();
         }
@@ -807,6 +816,7 @@ namespace Fujin
 
             HandleMovementStates();
             HandleInputQueue();
+            HandleOther();
             HandlePhysics();
         }
 
@@ -974,11 +984,12 @@ namespace Fujin
         void Jump()
         {
             float force = jump.force;
+            Vector3 direction = Vector3.up;
 
             #region Double Jump
 
             //  Double jump if not grounded and enabled
-            if (jump.enableDoubleJumps && (!grounded && !canJump))
+            if (jump.enableDoubleJumps && (!grounded && !canJump) && (!onWall && jump.enableWallJump))
             {
                 numJumps--;
                 force = jump.doubleJumpforce;
@@ -986,81 +997,81 @@ namespace Fujin
 
             #endregion Double Jump
 
-            #region Jump Direction
+                #region Jump Direction
 
-            // Calculate jump direction from movement state
-            if (movementState == MovementState.Mantling  || movementState == MovementState.Dashing)
-                return;
+                // Calculate jump direction from movement state
+                if (movementState == MovementState.Mantling || movementState == MovementState.Dashing)
+                    return;
 
-            if (movementState == MovementState.Crouching || movementState == MovementState.Sliding)
-                Stand();
+                if (movementState == MovementState.Crouching || movementState == MovementState.Sliding)
+                    Stand();
 
-            Vector3 direction = Vector3.up;
-
-            if (jump.enableWallJump && onWall)
-            {
-                if (movementState == MovementState.Climbing)
+                if (jump.enableWallJump && onWall)
                 {
-                    ExitClimb();
-                    direction = (-transform.forward + Vector3.up).normalized;
-                } else
-                {
-                    /////
+                    if (movementState == MovementState.Climbing)
+                    {
+                        ExitClimb();
+                        direction = (-transform.forward + Vector3.up).normalized;
+                    }
+                    else
+                    {
+                        /////
+                    }
+                     force = jump.wallJumpforce;
                 }
-            } else 
-            {
-                if (movementState == MovementState.Sprinting)
+                else
                 {
-                    sprintInput = true; // queue sprint input state
+                    if (movementState == MovementState.Sprinting)
+                    {
+                        sprintInput = true; // queue sprint input state
+                    }
+                    else if (movementState == MovementState.Pounding || movementState == MovementState.Grappling)
+                    {
+                        ResetMovement();
+                    }
                 }
-                else if (movementState == MovementState.Pounding || movementState == MovementState.Grappling)
-                {
-                    ResetMovement();
-                }
-             }
 
-            #endregion Jump Direction
+                #endregion Jump Direction
 
             #region Apply Force
 
             // Reset y velocity and add forces
-            rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+            if (rb.velocity.y < 0)
+                rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
             rb.AddForce(direction * force, ForceMode.Impulse);
+            if (jump.enableDrift)
+                StartYieldJumpDriftCoroutine();
             jumpInput = false;
             canJump = false;
 
             #endregion Apply Force
         }
 
-        void Lurch()
+        void JumpDrift()
         {
             Vector3 localVelocity = transform.InverseTransformDirection(rb.velocity);
             Vector3 direction = localVelocity.normalized;
 
             // Redirect velocity based on input for
-            if (moveInputs != Vector2.zero)
-            {
-                Vector3 temp = localVelocity;
+            Vector3 temp = localVelocity;
 
-                // Redirect velocitiees
-                if (moveInputs.x != 0 && Mathf.Abs(localVelocity.z) > Mathf.Abs(localVelocity.x))
-                    temp.x = Mathf.Abs(localVelocity.z) * moveInputs.x;
-                else if ((direction.x > 0.1 && moveInputs.x < -0.1) || (direction.x < -0.1 && moveInputs.x > 0.1))
-                    temp.x = -localVelocity.x;
-                else if (moveInputs.x == 0)
-                    temp.x = 0;
+            // Redirect velocitiees
+            if (moveInputs.x != 0 && Mathf.Abs(localVelocity.z) > Mathf.Abs(localVelocity.x))
+                temp.x = Mathf.Abs(localVelocity.z) * moveInputs.x;
+            else if ((direction.x > 0.1 && moveInputs.x < -0.1) || (direction.x < -0.1 && moveInputs.x > 0.1))
+                temp.x = -localVelocity.x;
+            else if (moveInputs.x == 0)
+                temp.x = 0;
 
-                if (moveInputs.y != 0 && Mathf.Abs(localVelocity.x) > Mathf.Abs(localVelocity.z))
-                    temp.z = Mathf.Abs(localVelocity.x) * moveInputs.y;
-                else if ((direction.z > 0.1 && moveInputs.y < -0.1) || (direction.z < -0.1 && moveInputs.y > 0.1))
-                    temp.z = -localVelocity.z;
-                else if (moveInputs.y == 0)
-                    temp.z = 0;
+            if (moveInputs.y != 0 && Mathf.Abs(localVelocity.x) > Mathf.Abs(localVelocity.z))
+                temp.z = Mathf.Abs(localVelocity.x) * moveInputs.y;
+            else if ((direction.z > 0.1 && moveInputs.y < -0.1) || (direction.z < -0.1 && moveInputs.y > 0.1))
+                temp.z = -localVelocity.z;
+            else if (moveInputs.y == 0)
+                temp.z = 0;
 
-                localVelocity = temp;
-            }
-
-            rb.velocity = transform.TransformDirection(localVelocity);
+            localVelocity = temp;
+            rb.AddForce(jump.driftStrength * 10 * (-rb.velocity * (1 - jump.driftRedirect) + transform.TransformDirection(localVelocity)));
         }
 
         /// <summary>
@@ -1410,6 +1421,7 @@ namespace Fujin
             else if (returnGrapple && grappleDistance < 0.1f) // end
             { 
                 EndGrapple();
+                ResetMovement();
                 return;
             }
 
@@ -1424,6 +1436,7 @@ namespace Fujin
         /// </summary>
         void Grapple()
         {
+            float speed = rb.velocity.magnitude;
             Vector3 direction = ((grapplePoint - cam.transform.position) + cam.transform.forward).normalized;
             Vector3 counterDirection = (1.1f * cam.transform.forward) + 0.4f * (transform.right * moveInputs.x);
 
@@ -1442,13 +1455,14 @@ namespace Fujin
             float angle = Vector3.Angle(direction, counterDirection);
             float distance = Vector3.Distance(cam.transform.position, grapplePoint);
             bool inView = Physics.Raycast(cam.transform.position, direction, grapple.range, collisionExclusionMask);
-            
+
             // End grpple if angle > 90, grapple blocked, about to collide, or moving too slow.
-            if (!inView || angle > grapple.maxAngle || distance < .1f || distance > grapple.range)
+            if (!inView || angle > grapple.maxAngle || speed < 0.01f || distance < .1f || distance > grapple.range)
             {
                 if (distance < .1f) // reset velocity if about to collide
                     rb.velocity = Vector3.zero;
-
+                
+                EndGrapple();
                 ResetMovement();
             }
         }
@@ -1507,8 +1521,69 @@ namespace Fujin
             returnGrapple = false;
             Destroy(grappleObj);
             StartCoroutine(YieldGrappleCooldown());
-            movementState = MovementState.Default;
         }
+
+        /**#region Sway
+
+        private void AddIdleSway()
+        {
+            float h = 0.001f;
+            float w = 0.001f;
+            float a = 3;
+            float b = 4;
+            float t = Time.time;
+
+            Vector3 idleSway = new Vector3(w * Mathf.Sin(a * t + Mathf.PI), h * Mathf.Sin(b * t));
+            targetSwayPosition += idleSway * sway.idleSwayAmount;
+
+        }
+
+        private void AddMovementSway()
+        {
+            targetSwayRotation = Quaternion.Euler(targetSwayRotation.eulerAngles + new Vector3(0, 0, Mathf.Clamp(-x * horizontalSwayAmount, -15, 15)));
+        }
+
+        private void AddLookSway(float mouseX, float mouseY)
+        {
+            targetSwayPosition += new Vector3(
+                Mathf.Clamp(-mouseX * sway.lookSwayAmount, -sway.lookSwayMaxAmount, sway.lookSwayMaxAmount),
+                Mathf.Clamp(-mouseY * sway.lookSwayAmount, -sway.lookSwayMaxAmount, sway.lookSwayMaxAmount),
+                0);
+        }
+
+        private void AddFallSway()
+        {
+            if (targetSwayPosition.y < sway.max.y)
+            {
+                targetSwayPosition += new Vector3(0, sway.fallAmount, 0);
+            }
+        }
+
+        private void Sway()
+        {
+            if (!grounded) 
+            {
+                AddFallSway();
+            }
+
+            if (moveInputs.x != 0)
+                AddMovementSway();
+
+            if (movementState <= MovementState.SlowWalk)
+            {
+                AddIdleSway();
+            }
+
+            sway.container.localPosition = Vector3.Lerp(sway.container.localPosition, targetSwayPosition, sway.speed * Time.deltaTime);
+            sway.container.localRotation = Quaternion.Lerp(sway.container.localRotation, targetSwayRotation, sway.speed * Time.deltaTime);
+
+            // reset for next update
+            targetSwayPosition = Vector3.zero;
+            targetSwayRotation = Quaternion.identity;
+        }
+
+        #endregion Sway
+        **/
 
         /// <summary>
         /// Stand
@@ -1534,9 +1609,6 @@ namespace Fujin
             slideInput = false;
             cueStand = false;
             autoRunInput = false;
-
-            if (movementState == MovementState.Grappling)
-                EndGrapple();
 
             targetFOV = defaultFOV;
             targetHeight = defaultHeight;
@@ -1602,17 +1674,20 @@ namespace Fujin
             }
 
             #endregion Movement States
+        }
 
-            #region Auxillary States
-
-            // Auxillary States - States that can be overlayed onto a core state. We must handle these seperately
-
+        void HandleOther() 
+        {
             // SPRINTING
             // Note: this is a 'core' state, however sprintInput has to be kept track over multiple states.
             // we handle this below.
-            if (sprint.enable && sprintInput && moveInputs.y > 0.1f
+            if (sprint.enable && sprintInput && (moveInputs.y > 0.1f || autoRunInput)
                 && movementState != MovementState.Sprinting && movementState <= MovementState.SlowWalk)
                 Sprint();
+
+            // SWAY
+            //if (sway.enable) 
+            //    Sway();
 
             // LEANING
             if (lean.enable && (leanInput || leanDirection == 0))
@@ -1664,7 +1739,7 @@ namespace Fujin
             if (grapple.enable && grappleObj != null
                 && movementState != MovementState.Grappling && movementState != MovementState.ThrowingGrapple)
             {
-                Destroy(grappleObj); // clean up
+                EndGrapple();
             }
 
             // SPEED LINES
@@ -1673,8 +1748,6 @@ namespace Fujin
                 float speed = Mathf.Clamp(rb.velocity.magnitude - speedlines.minVelocity, 0, speedlines.maxVelocity);
                 speedLinesEmission.rateOverTimeMultiplier = Mathf.Pow(speed, 1 + speedlines.curve) * speedlines.amount;
             }
-
-            #endregion Auxillary States
         }
 
         #endregion Actions
@@ -2033,16 +2106,30 @@ namespace Fujin
             if (physics.limitVelocity)
             {
                 Vector3 newVelocity = rb.velocity;
-                Vector3 maxVelocity = physics.maxVelocity;
+                Vector2 maxVelocity = physics.maxVelocity;
 
                 if (Mathf.Abs(rb.velocity.x) > maxVelocity.x)
                     newVelocity.x = maxVelocity.x * Mathf.Sign(rb.velocity.x);
-                if (Mathf.Abs(rb.velocity.z) > maxVelocity.z)
-                    newVelocity.z = maxVelocity.z * Mathf.Sign(rb.velocity.z);
+                if (Mathf.Abs(rb.velocity.z) > maxVelocity.x)
+                    newVelocity.z = maxVelocity.x * Mathf.Sign(rb.velocity.z);
                 if (Mathf.Abs(rb.velocity.y) > maxVelocity.y)
                     newVelocity.y = maxVelocity.y * Mathf.Sign(rb.velocity.y);
 
                 rb.velocity = newVelocity;
+            }
+
+            // Cap Turn rate
+            lookResistance = 0;
+            if (movementState == MovementState.Grappling)
+                lookResistance += grapple.lookResistance;
+            else if (freeLookInput)
+                lookResistance += freelook.lookResistance;
+            else if (!grounded) 
+            {
+                if (physics.turnRateFromVelocity)
+                    lookResistance += rb.velocity.magnitude / physics.maxVelocity.magnitude;
+                else if (physics.airTurnRate < 1)
+                    lookResistance += 1 - physics.airTurnRate;
             }
 
             #endregion Counter Physics
@@ -2083,6 +2170,7 @@ namespace Fujin
 
         IEnumerator wallStickCoroutine;
         IEnumerator jumpGraceCoroutine;
+        IEnumerator jumpDriftCoroutine;
         IEnumerator exitClimbCoroutine;
 
         /// <summary>
@@ -2140,6 +2228,36 @@ namespace Fujin
         {
             yield return new WaitForSeconds(jump.gracePeriod);
             canJump = false;
+        }
+        
+        /// <summary>
+        /// Restarts the coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StartYieldJumpDriftCoroutine()
+        {
+            StopJumpDriftCoroutine();
+            jumpDriftCoroutine = YieldJumpDriftTime();
+            StartCoroutine(jumpDriftCoroutine);
+        }
+
+        /// <summary>
+        /// Stops the current coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StopJumpDriftCoroutine()
+        {
+            if (jumpDriftCoroutine != null)
+                StopCoroutine(jumpDriftCoroutine);
+        }
+
+        /// <summary>
+        /// Waits for <code>FujinClimbModule.duration</code> and exits climb.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator YieldJumpDriftTime()
+        {
+            jumpDrift = true;
+            yield return new WaitForSeconds(jump.driftPeriod);
+            jumpDrift = false;
         }
 
         /// <summary>
