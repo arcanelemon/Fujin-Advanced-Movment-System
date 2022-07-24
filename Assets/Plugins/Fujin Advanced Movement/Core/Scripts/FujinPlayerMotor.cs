@@ -102,6 +102,7 @@ namespace Fujin
         bool controlHeight = true;
         bool canJump = false;
         bool canPound = true;
+        bool canGrapple = true;
         bool returnGrapple;
 
         float d;
@@ -371,7 +372,7 @@ namespace Fujin
             int state = (int)movementState;
             if (state == 11)
                 EndGrapple();
-            else if (state <= 4)
+            else if (state <= 4 && canGrapple)
                 StartGrapple();
         }
 
@@ -811,6 +812,23 @@ namespace Fujin
             HandleInputQueue();
             HandlePhysics();
         }
+
+        /// <summary>
+        /// [ENGINE]
+        /// </summary>
+        private void OnDrawGizmos()
+        {
+            if (!drawGizmos)
+                return;
+
+            Gizmos.color = Color.red;
+
+            if (grounded)
+                Gizmos.color = Color.cyan;
+            Vector3 origin = transform.position + Vector3.up * groundCheckRadius;
+            Gizmos.DrawWireSphere(origin + (Vector3.down * groundCheckDrawDistance), groundCheckRadius);
+        }
+
 
         #endregion Engine
 
@@ -1442,6 +1460,8 @@ namespace Fujin
             float distance = Vector3.Distance(castOrigin, grappleObj.transform.position);
             if (Physics.Raycast(castOrigin, direction, out hit, distance, collisionExclusionMask))
             {
+                canGrapple = false;
+                numJumps = jump.doubleJumpCount;
                 targetFOV = defaultFOV * 1.1f;
                 grappleObj.transform.position = hit.point;
                 grapplePoint = hit.point;
@@ -1480,6 +1500,7 @@ namespace Fujin
         {
             returnGrapple = false;
             Destroy(grappleObj);
+            StartCoroutine(YieldGrappleCooldown());
             ResetMovement();
         }
 
@@ -1668,7 +1689,7 @@ namespace Fujin
         void CheckGround()
         {
 
-            Vector3 origin = transform.position + Vector3.up * (groundCheckRadius + 0.01f);
+            Vector3 origin = transform.position + Vector3.up * (groundCheckRadius + collisionThreshold);
             Vector3 direction = Vector3.down;
 
             RaycastHit hit;
@@ -1676,7 +1697,7 @@ namespace Fujin
             {
                 Vector3 contactPoint = origin + (direction * groundCheckDrawDistance);
                 Vector3 contactDirection = hit.point - origin;
-                float contactOffset = contactDirection.magnitude + 0.01f;
+                float contactOffset = contactDirection.magnitude + collisionThreshold;
 
                 RaycastHit spherePoint;
                 if (Physics.Raycast(contactPoint, contactDirection, out spherePoint, contactOffset, collisionExclusionMask))
@@ -1702,27 +1723,27 @@ namespace Fujin
 
                     if (slideInput || movementState == MovementState.Sliding)
                     {
-                        if (Vector3.Distance(rb.position, previousSlidePosition) < 1f)
-                            return;
+                        if (Mathf.Abs(rb.position.y - previousSlidePosition.y) > 1f)
+                        {
+                            Vector3 localVelocity = transform.InverseTransformDirection(previousVelocity);
+                            localVelocity = new Vector3(Mathf.Abs(localVelocity.x), Mathf.Abs(localVelocity.y), Mathf.Abs(localVelocity.z));
+                            float additionalSlideForce = localVelocity.z > localVelocity.y ? localVelocity.z : localVelocity.y;
+                            float slideAngle = Vector3.Angle(previousVelocity.normalized, -Vector3.up);
+                            rb.AddForce(Vector3.ProjectOnPlane(transform.forward * (90 / slideAngle), normal) * additionalSlideForce);
 
-                        Vector3 localVelocity = transform.InverseTransformDirection(previousVelocity);
-                        localVelocity = new Vector3(Mathf.Abs(localVelocity.x), Mathf.Abs(localVelocity.y), Mathf.Abs(localVelocity.z));
-                        float additionalSlideForce = localVelocity.z > localVelocity.y ? localVelocity.z : localVelocity.y;
-                        float slideAngle = Vector3.Angle(previousVelocity.normalized, -Vector3.up);
-                        rb.AddForce(Vector3.ProjectOnPlane(transform.forward * (90 / slideAngle), normal) * additionalSlideForce);
+                            //rb.AddForce(Vector3.ProjectOnPlane(transform.forward *  (90 / slideAngle), normal) * additionalSlideForce);
 
-                        //rb.AddForce(Vector3.ProjectOnPlane(transform.forward *  (90 / slideAngle), normal) * additionalSlideForce);
+                            //if (slideInput)
+                            //{
+                            //    //rb.velocity = new Vector3(previousVelocity.x, 0, previousVelocity.z);
+                            //    StartSlide();
+                            //}
 
-                        //if (slideInput)
-                        //{
-                        //    //rb.velocity = new Vector3(previousVelocity.x, 0, previousVelocity.z);
-                        //    StartSlide();
-                        //}
+                            if (movementState != MovementState.Sliding)
+                                StartSlide();
 
-                        if (movementState != MovementState.Sliding)
-                            StartSlide();
-
-                        previousSlidePosition = rb.position;
+                            previousSlidePosition = rb.position;
+                        }
                     }
 
                     if (movementState == MovementState.Pounding)
@@ -2140,6 +2161,16 @@ namespace Fujin
         {
             yield return new WaitForSeconds(pound.duration);
             ResetMovement();
+        }
+
+        /// <summary>
+        /// Waits for <code>FujinPoundModule.duration</code> and resets movement.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator YieldGrappleCooldown()
+        {
+            yield return new WaitForSeconds(grapple.cooldownTime);
+            canGrapple = true;
         }
 
         /// <summary>
