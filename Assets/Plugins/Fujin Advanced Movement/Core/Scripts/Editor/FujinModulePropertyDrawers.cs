@@ -137,10 +137,7 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
             GUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.enableDoubleJumps = GUILayout.Toggle(module.enableDoubleJumps, "Lurch");
-            GUI.enabled = module.enableDoubleJumps;
-            module.doubleJumpCount = EditorGUILayout.IntField(module.doubleJumpCount);
-            GUI.enabled = true;
+            module.enableLurch = GUILayout.Toggle(module.enableLurch, "Drift");
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -148,20 +145,19 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.lurchPeriod = EditorGUILayout.FloatField("Lurch Period", Mathf.Max(0, module.lurchPeriod));
+                module.lurchPeriod = EditorGUILayout.FloatField("Drift Period", Mathf.Max(0, module.lurchPeriod));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.lurchStrength = EditorGUILayout.Slider("Lurch Strength", module.lurchStrength, 0, 1);
+                module.lurchStrength = EditorGUILayout.Slider("Drift Strength", module.lurchStrength, 0, 1);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
-                GUILayout.Space(5);
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.lurchRedirect = EditorGUILayout.Slider("Lurch Redirect", module.lurchRedirect, 0, 1);
+                module.lurchRedirect = EditorGUILayout.Slider("Drift Redirect", module.lurchRedirect, 0, 1);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
                 GUILayout.Space(5);
@@ -1087,6 +1083,12 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
             module.speed = EditorGUILayout.FloatField("Grapple Speed", Mathf.Max(0, module.speed));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.cooldownTime = EditorGUILayout.FloatField("Grapple Cooldown", Mathf.Max(0, module.cooldownTime));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
