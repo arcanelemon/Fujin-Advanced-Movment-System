@@ -111,7 +111,7 @@ namespace Fujin
         float currSpeed;
         float normalAngle;
         float groundCheckRadius = 0.49f;
-        float groundCheckDrawDistance = 0.02f;
+        float groundCheckDrawDistance = 0.1f;
         float collisionDrawOffset = 0.5f;
         float collisionThreshold = 0.01f;
         float heightOffset;
@@ -179,8 +179,7 @@ namespace Fujin
 
         void OnSprintPress(InputAction.CallbackContext context)
         {
-            int state = (int)movementState;
-            if (!sprint.enable || (moveInputs.y < 0.1f && !autoRunInput) || state > 4)
+            if (!sprint.enable || movementState > MovementState.SlowWalk)
                 return;
 
             if (sprint.hold) // hold sprint
@@ -189,15 +188,16 @@ namespace Fujin
                 {
                     sprintInput = true;
 
-                    if (headspaceAvailable)
-                        Sprint();
-                    else
+                    if (!headspaceAvailable)
+                    {
                         cueStand = true;
+                        return;
+                    }
                 }
             }
             else // toggle sprint
             {
-                if (state == 1) // reset movement but must account for auto run
+                if (movementState == MovementState.Sprinting) // reset movement but must account for auto run
                 {
                     sprintInput = false;
 
@@ -214,10 +214,11 @@ namespace Fujin
                     {
                         sprintInput = true;
 
-                        if (headspaceAvailable)
-                            Sprint();
-                        else
+                        if (!headspaceAvailable)
+                        {
                             cueStand = true;
+                            return;
+                        }
                     }
                 }
             }
@@ -249,7 +250,7 @@ namespace Fujin
 
         void OnCrouchPress(InputAction.CallbackContext context)
         {
-            if (!crouch.enable && !slide.enable)
+            if (!crouch.enable && !slide.enable || movementState == MovementState.Grappling)
                 return;
 
             if (!grounded)
@@ -264,7 +265,7 @@ namespace Fujin
             {
                 if (crouch.enable && (!slide.enable || (slide.enable && movementState != MovementState.Sprinting)))
                 {
-                        Crouch();
+                    Crouch();
                 }
                 else if (slide.enable)
                 {
@@ -281,7 +282,7 @@ namespace Fujin
 
         void OnDashPress(InputAction.CallbackContext context)
         {
-            if (!dash.enable || (!grounded && !dash.canDashInAir) || (int)movementState > 1 || numDashes == 0)
+            if (!dash.enable || (!grounded && !dash.canDashInAir) || movementState > MovementState.Sprinting || numDashes == 0)
                 return;
 
             StartDash();
@@ -297,8 +298,7 @@ namespace Fujin
 
         void OnAutoRunPress(InputAction.CallbackContext context)
         {
-            int state = (int)movementState;
-            if (!autorun.enable || !grounded || state > 4)
+            if (!autorun.enable || !grounded || movementState > MovementState.SlowWalk)
                 return;
 
             autoRunInput = !autoRunInput;
@@ -306,8 +306,7 @@ namespace Fujin
 
         void OnLeanPress(InputAction.CallbackContext context)
         {
-            int state = (int)movementState;
-            if (!lean.enable || !grounded || (state <= 4 && state == 1))
+            if (!lean.enable || !grounded || (movementState <= MovementState.SlowWalk && movementState == MovementState.Sprinting))
                 return;
 
             Lean(context.ReadValue<float>());
@@ -315,8 +314,7 @@ namespace Fujin
 
         void OnLeanRelease(InputAction.CallbackContext context)
         {
-            int state = (int)movementState;
-            if (!lean.enable || !lean.hold || state >= 4)
+            if (!lean.enable || !lean.hold || movementState >= MovementState.SlowWalk)
                 return;
 
             StopLean();
@@ -343,11 +341,10 @@ namespace Fujin
 
         void OnSlowWalkPress(InputAction.CallbackContext context)
         {
-            int state = (int)movementState;
-            if (!slowwalk.enable || !grounded || state > 4 || state == 1)
+            if (!slowwalk.enable || !grounded || movementState > MovementState.SlowWalk || movementState == MovementState.Sprinting)
                 return;
 
-            if (!slowwalk.hold && state == 4)
+            if (!slowwalk.hold && movementState == MovementState.SlowWalk)
             {
                 ResetMovement();
             }
@@ -369,10 +366,10 @@ namespace Fujin
         {
             if (!grapple.enable)
                 return;
-            int state = (int)movementState;
-            if (state == 11)
+
+            if (movementState == MovementState.Grappling)
                 EndGrapple();
-            else if (state <= 4 && canGrapple)
+            else if (movementState <= MovementState.SlowWalk && canGrapple)
                 StartGrapple();
         }
 
@@ -1016,13 +1013,9 @@ namespace Fujin
                 {
                     sprintInput = true; // queue sprint input state
                 }
-                else if (movementState == MovementState.Pounding)
+                else if (movementState == MovementState.Pounding || movementState == MovementState.Grappling)
                 {
                     ResetMovement();
-                }
-                else if (movementState == MovementState.Grappling)
-                {
-                    EndGrapple();
                 }
              }
 
@@ -1092,6 +1085,7 @@ namespace Fujin
         /// </summary>
         void Crouch()
         {
+            sprintInput = false;
             currSpeed = movement.speed * crouch.speedMultiplier;
             targetHeight = defaultHeight * crouch.height;
             movementState = MovementState.Crouching;
@@ -1111,8 +1105,10 @@ namespace Fujin
         /// StartSlide
         /// Sets <code>movementState</code> to <code>MovementState.Sliding</code> and associated variables.
         /// </summary>
-        void StartSlide() 
+        void StartSlide()
         {
+            sprintInput = false;
+            slideInput = false;
             targetFOV = defaultFOV * 1.1f;
             targetHeight = defaultHeight * slide.height;
 
@@ -1133,7 +1129,7 @@ namespace Fujin
             // Slide Control
             if (moveInputs.x != 0)
             {
-                rb.velocity -= transform.right * slideDirection * rb.velocity.magnitude;
+                rb.velocity -= transform.right * slideDirection * rb.velocity.magnitude; // cancel previous control to prevent acceleration
                 slideDirection = Mathf.Lerp(slideDirection, moveInputs.x, (Mathf.Exp(slide.control) - 1) * 10 * d);
                 Vector3 control = transform.right * slideDirection * rb.velocity.magnitude;
                 rb.velocity += control;
@@ -1145,8 +1141,8 @@ namespace Fujin
 
             //rb.MovePosition(rb.position + (transform.right * moveInputs.x) * rb.velocity.magnitude * slide.control * d);
 
-            // Slide down slopes
-            if (normalAngle > 0)
+            // Slide down slopes 
+            if (normalAngle > 0) // SLIDE PROBLEM HERE
                 ProjectDownSlope(Mathf.Min(normalAngle / physics.slopeAngle, 1) * physics.slopeForce);
 
             // If force is decellarating and less than threshold, stop
@@ -1412,7 +1408,10 @@ namespace Fujin
                 grapplePoint = transform.position + -transform.right + Vector3.up * cameraOffset.y;
             }
             else if (returnGrapple && grappleDistance < 0.1f) // end
+            { 
                 EndGrapple();
+                return;
+            }
 
             CheckGrapple();
             StretchGrapple(grapple.throwSpeed);
@@ -1425,26 +1424,32 @@ namespace Fujin
         /// </summary>
         void Grapple()
         {
+            Vector3 direction = ((grapplePoint - cam.transform.position) + cam.transform.forward).normalized;
+            Vector3 counterDirection = (1.1f * cam.transform.forward) + 0.4f * (transform.right * moveInputs.x);
+
             // Move Grapple
             StretchGrapple(grapple.speed);
 
             // Limit player rotation
 
-            // Move Player
-            Vector3 direction = ((grapplePoint - cam.transform.position) + cam.transform.forward).normalized;
-            rb.velocity = direction * grapple.speed;
+            // Move Player at angle between grapple and camera
+            rb.velocity = (direction + counterDirection).normalized * grapple.speed;
 
-            if (drawGizmos)
+            if (drawGizmos) // draw debug line
                 Debug.DrawLine(cam.transform.position, direction * rb.velocity.magnitude, Color.cyan, d);
 
             // Check if End Conditions are  met
-            float angle = Vector3.Angle(cam.transform.position, grapplePoint);
+            float angle = Vector3.Angle(direction, counterDirection);
             float distance = Vector3.Distance(cam.transform.position, grapplePoint);
             bool inView = Physics.Raycast(cam.transform.position, direction, grapple.range, collisionExclusionMask);
-            if (!inView || angle > 90 || rb.velocity.magnitude < 5 || distance < 1 || distance > grapple.range)
+            
+            // End grpple if angle > 90, grapple blocked, about to collide, or moving too slow.
+            if (!inView || angle > grapple.maxAngle || distance < .1f || distance > grapple.range)
             {
-                EndGrapple();
-                return; 
+                if (distance < .1f) // reset velocity if about to collide
+                    rb.velocity = Vector3.zero;
+
+                ResetMovement();
             }
         }
 
@@ -1460,6 +1465,7 @@ namespace Fujin
             float distance = Vector3.Distance(castOrigin, grappleObj.transform.position);
             if (Physics.Raycast(castOrigin, direction, out hit, distance, collisionExclusionMask))
             {
+                ResetMovement();
                 canGrapple = false;
                 numJumps = jump.doubleJumpCount;
                 targetFOV = defaultFOV * 1.1f;
@@ -1501,7 +1507,7 @@ namespace Fujin
             returnGrapple = false;
             Destroy(grappleObj);
             StartCoroutine(YieldGrappleCooldown());
-            ResetMovement();
+            movementState = MovementState.Default;
         }
 
         /// <summary>
@@ -1510,17 +1516,12 @@ namespace Fujin
         /// </summary>
         void Stand()
         {
-            bool sprint = this.sprintInput;
             bool autoRun = this.autoRunInput;
 
             ResetMovement();
 
-            this.sprintInput = sprint;
             this.autoRunInput = autoRun;
             slideDirection = 0;
-
-            if (sprint)
-                Sprint();
         }
 
         /// <summary>
@@ -1530,10 +1531,12 @@ namespace Fujin
         void ResetMovement()
         {
             jumpInput = false;
-            sprintInput = false;
             slideInput = false;
             cueStand = false;
             autoRunInput = false;
+
+            if (movementState == MovementState.Grappling)
+                EndGrapple();
 
             targetFOV = defaultFOV;
             targetHeight = defaultHeight;
@@ -1604,6 +1607,13 @@ namespace Fujin
 
             // Auxillary States - States that can be overlayed onto a core state. We must handle these seperately
 
+            // SPRINTING
+            // Note: this is a 'core' state, however sprintInput has to be kept track over multiple states.
+            // we handle this below.
+            if (sprint.enable && sprintInput && moveInputs.y > 0.1f
+                && movementState != MovementState.Sprinting && movementState <= MovementState.SlowWalk)
+                Sprint();
+
             // LEANING
             if (lean.enable && (leanInput || leanDirection == 0))
             {
@@ -1647,6 +1657,14 @@ namespace Fujin
                     lookOffset = Vector2.Lerp(lookOffset, Vector2.zero, freelook.resetSpeed * d);
                     cameraContainer.localRotation = Quaternion.Euler(yRot + lookOffset.y, lookOffset.x, tiltRotation);
                 }
+            }
+
+            // GRAPPLE
+            // Note: this is a 'core' state, however various actions can cause the grapple to not self-delete properly
+            if (grapple.enable && grappleObj != null
+                && movementState != MovementState.Grappling && movementState != MovementState.ThrowingGrapple)
+            {
+                Destroy(grappleObj); // clean up
             }
 
             // SPEED LINES
@@ -1723,21 +1741,14 @@ namespace Fujin
 
                     if (slideInput || movementState == MovementState.Sliding)
                     {
-                        if (Mathf.Abs(rb.position.y - previousSlidePosition.y) > 1f)
+                        if (Mathf.Abs(rb.position.y - previousSlidePosition.y) > 1f || slideInput)
                         {
                             Vector3 localVelocity = transform.InverseTransformDirection(previousVelocity);
                             localVelocity = new Vector3(Mathf.Abs(localVelocity.x), Mathf.Abs(localVelocity.y), Mathf.Abs(localVelocity.z));
                             float additionalSlideForce = localVelocity.z > localVelocity.y ? localVelocity.z : localVelocity.y;
                             float slideAngle = Vector3.Angle(previousVelocity.normalized, -Vector3.up);
-                            rb.AddForce(Vector3.ProjectOnPlane(transform.forward * (90 / slideAngle), normal) * additionalSlideForce);
-
-                            //rb.AddForce(Vector3.ProjectOnPlane(transform.forward *  (90 / slideAngle), normal) * additionalSlideForce);
-
-                            //if (slideInput)
-                            //{
-                            //    //rb.velocity = new Vector3(previousVelocity.x, 0, previousVelocity.z);
-                            //    StartSlide();
-                            //}
+                            if (additionalSlideForce > 0)
+                                rb.AddForce(Vector3.ProjectOnPlane(transform.forward * (90 / slideAngle), normal) * additionalSlideForce);
 
                             if (movementState != MovementState.Sliding)
                                 StartSlide();
@@ -1923,7 +1934,7 @@ namespace Fujin
             #endregion Raycast
 
             #region Control state
-            if (movementState != MovementState.Mantling && canMantle && (!grounded && !mantle.transitionFromGround || mantle.transitionFromGround) && headspaceAvailable && moveInputs.y > 0.1f)
+            if (movementState != MovementState.Mantling && canMantle && (!grounded && !mantle.transitionFromGround || mantle.transitionFromGround) && headspaceAvailable)
             {
                 StartMantle(castOrigin.y);
             }
@@ -1977,7 +1988,7 @@ namespace Fujin
             #endregion Raycast
 
             #region Control states
-            if ((!grounded && !climb.transitionFromGround || climb.transitionFromGround) && onWall && headspaceAvailable && moveInputs.y > 0 && movementState != MovementState.Climbing && lastClimbCollider != wallCollider)
+            if ((!grounded || climb.transitionFromGround) && onWall && headspaceAvailable && moveInputs.y > 0 && movementState != MovementState.Climbing && lastClimbCollider != wallCollider)
             {
                 lastClimbCollider = wallCollider;
                 StartClimb();
@@ -2006,7 +2017,7 @@ namespace Fujin
             #region Counter Physics
 
             // Gravity
-            if ((int)movementState <= 6) // gravity states
+            if (movementState <= MovementState.ThrowingGrapple) // gravity states
             {
                 if (!grounded && !onStep)
                     rb.AddForce(Vector3.down * (physics.gravityMultiplier - (onWall? physics.gravityMultiplier * physics.wallStick : 0)));
@@ -2048,7 +2059,8 @@ namespace Fujin
         {
             Vector3 slopeSideways = Vector3.Cross(Vector3.down, normal);
             Vector3 slopeDown = Vector3.Cross(normal, slopeSideways).normalized;
-            rb.AddForce(slopeDown * force);
+            rb.velocity += slopeDown * force * d;
+            //rb.AddForce(slopeDown * force);
         }
 
         #endregion Physics

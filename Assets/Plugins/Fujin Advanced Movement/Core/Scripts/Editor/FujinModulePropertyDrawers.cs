@@ -1088,6 +1088,12 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
+            module.maxAngle = EditorGUILayout.FloatField("Max Grapple Angle", Mathf.Max(0, module.maxAngle));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
             module.cooldownTime = EditorGUILayout.FloatField("Grapple Cooldown", Mathf.Max(0, module.cooldownTime));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();

@@ -175,6 +175,7 @@ namespace Fujin
         public float range;
         public float throwSpeed;
         public float speed;
+        public float maxAngle;
         public float cooldownTime;
         public GameObject prefab;
     }
