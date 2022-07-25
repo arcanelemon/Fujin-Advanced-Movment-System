@@ -1050,23 +1050,24 @@ MonoBehaviour:
     foldout: 0
     gravityMultiplier: 30
     limitVelocity: 0
-    maxVelocity: {x: 0, y: 0, z: 0}
+    maxVelocity: {x: 0, y: 0}
     airDrag: 0
-    airTurnRate: 0.01
-    turnRateFromVelocity: 1
-    stepHeight: 1
+    airTurnRate: 1
+    turnRateFromVelocity: 0
+    stepHeight: 0.1
     stepDepth: 0
     slopeAngle: 0
     slopeForce: 0
-    wallStick: 0
+    wallStick: 1
     useWallStickDuration: 0
     wallStickDuration: 0
-    wallStickTilt: 0
+    physicMaterial: {fileID: 13400000, guid: 54362fa1f44114a439f693807747d532, type: 2}
   movement:
     enable: 0
     foldout: 0
     speed: 8
     acceleration: 0.1
+    airMultiplier: 0
     decceleration: 0.1
     tiltAngle: 5
     tiltSpeed: 5
@@ -1083,10 +1084,10 @@ MonoBehaviour:
     enableDoubleJumps: 1
     wallJumpforce: 0
     enableWallJump: 1
-    lurchPeriod: 0
-    lurchStrength: 0
-    lurchRedirect: 0
-    enableLurch: 0
+    driftPeriod: 0
+    driftStrength: 0
+    driftRedirect: 0
+    enableDrift: 0
   sprint:
     enable: 1
     foldout: 0
@@ -1129,13 +1130,13 @@ MonoBehaviour:
     multiplyByHeight: 1
     useDuration: 1
   mantle:
-    enable: 1
+    enable: 0
     foldout: 0
     speed: 10
     height: 2
     transitionFromGround: 0
   climb:
-    enable: 1
+    enable: 0
     foldout: 1
     speed: 5
     useDuration: 1
@@ -1144,9 +1145,16 @@ MonoBehaviour:
   wallrun:
     enable: 0
     foldout: 0
-    minSpeed: 0
+    speed: 0
     accelaration: 0
+    useAccelaration: 0
     boost: 0
+    useBoost: 0
+    minHeight: 0
+    useDrag: 0
+    drag: 0
+    useDuration: 0
+    duration: 0
   headbob:
     enable: 0
     foldout: 0
@@ -1177,12 +1185,15 @@ MonoBehaviour:
     resetSpeed: 5
     horizontalAngle: 90
     verticalAngle: 90
+    lookResistance: 0
   grapple:
     enable: 1
     foldout: 1
     range: 30
     throwSpeed: 15
     speed: 30
+    maxAngle: 90
+    lookResistance: 0
     cooldownTime: 0
     prefab: {fileID: 2992664888159154120, guid: 7098cf68dac0e7b458888a281884342b, type: 3}
   speedlines:
@@ -1229,7 +1240,7 @@ MonoBehaviour:
   inputFoldout: 0
   featuresFoldout: 0
   morefeaturesFoldout: 1
-  configFoldout: 0
+  configFoldout: 1
   debugFoldout: 1
   hideMouseOnAwake: 1
 --- !u!4 &1918147196
@@ -1240,7 +1251,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1918147191}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 18.18, y: 8.98, z: 297}
+  m_LocalPosition: {x: -51.36, y: -1.23, z: 137.96}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1768827082}

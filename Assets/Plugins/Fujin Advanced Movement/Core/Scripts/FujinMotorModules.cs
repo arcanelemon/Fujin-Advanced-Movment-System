@@ -14,6 +14,7 @@ namespace Fujin
     {
         public float speed;
         public float acceleration;
+        public float airMultiplier;
         public float decceleration;
         public float tiltAngle;
         public float tiltSpeed;
@@ -118,9 +119,16 @@ namespace Fujin
     [System.Serializable]
     public class FujinWallrunModule : FujinMotorModule
     {
-        public float minSpeed;
+        public float speed;
         public float accelaration;
+        public bool useAccelaration;
         public float boost;
+        public bool useBoost;
+        public float minHeight;
+        public bool useDrag;
+        public float drag;
+        public bool useDuration;
+        public float duration;
     }
 
     [System.Serializable]
@@ -208,7 +216,7 @@ namespace Fujin
         public float wallStick;
         public bool useWallStickDuration;
         public float wallStickDuration;
-        public float wallStickTilt;
+        public PhysicMaterial physicMaterial;
     }
 
     [System.Serializable]
