@@ -1008,12 +1008,16 @@ namespace Fujin
         {
             float force = jump.force;
             Vector3 direction = Vector3.up;
+            jumpInput = false;
 
             #region Double Jump
 
             //  Double jump if not grounded and enabled
-            if (jump.enableDoubleJumps && (!grounded && !canJump) && (!onWall && jump.enableWallJump))
+            if (!grounded && !canJump)
             {
+                if (!jump.enableDoubleJumps || (onWall && jump.enableWallJump))
+                    return;
+
                 numJumps--;
                 force = jump.doubleJumpforce;
             }
@@ -1064,7 +1068,6 @@ namespace Fujin
             rb.AddForce(direction * force, ForceMode.Impulse);
             if (jump.enableDrift)
                 StartYieldJumpDriftCoroutine();
-            jumpInput = false;
             canJump = false;
 
             #endregion Apply Force

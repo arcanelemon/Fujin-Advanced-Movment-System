@@ -910,8 +910,8 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings:
       - m_Name: 
-        m_Id: 5d0a90dd-d740-4d98-b4f2-0ecb14148455
-        m_Path: <Keyboard>/c
+        m_Id: 7b6a4654-c94b-441f-8814-d7fe6f367c42
+        m_Path: <Mouse>/backButton
         m_Interactions: 
         m_Processors: 
         m_Groups: 
@@ -1051,12 +1051,12 @@ MonoBehaviour:
     gravityMultiplier: 30
     limitVelocity: 0
     maxVelocity: {x: 0, y: 0}
-    airDrag: 0
+    airDrag: 0.2
     airTurnRate: 1
     turnRateFromVelocity: 0
     stepHeight: 0.1
     stepDepth: 0
-    slopeAngle: 0
+    slopeAngle: 45
     slopeForce: 0
     wallStick: 1
     useWallStickDuration: 0
@@ -1067,7 +1067,7 @@ MonoBehaviour:
     foldout: 0
     speed: 8
     acceleration: 0.1
-    airMultiplier: 0
+    airMultiplier: 0.5
     decceleration: 0.1
     tiltAngle: 5
     tiltSpeed: 5
@@ -1188,17 +1188,17 @@ MonoBehaviour:
     lookResistance: 0
   grapple:
     enable: 1
-    foldout: 1
+    foldout: 0
     range: 30
     throwSpeed: 15
     speed: 30
     maxAngle: 90
-    lookResistance: 0
-    cooldownTime: 0
+    lookResistance: 0.5
+    cooldownTime: 5
     prefab: {fileID: 2992664888159154120, guid: 7098cf68dac0e7b458888a281884342b, type: 3}
   speedlines:
     enable: 1
-    foldout: 1
+    foldout: 0
     amount: 5
     thiness: 0
     radius: 0.6
@@ -1237,7 +1237,7 @@ MonoBehaviour:
     prefab: {fileID: 7028699022634694380, guid: 9265dd0ed158f6740a7d7cba86757531, type: 3}
   cameraContainer: {fileID: 1768827082}
   drawGizmos: 1
-  inputFoldout: 0
+  inputFoldout: 1
   featuresFoldout: 0
   morefeaturesFoldout: 1
   configFoldout: 1
