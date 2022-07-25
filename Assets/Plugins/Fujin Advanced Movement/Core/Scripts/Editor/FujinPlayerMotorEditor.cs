@@ -20,6 +20,7 @@ public class FujinPlayerMotorEditor : Editor
     Material mat;
     FujinPlayerMotor motor;
     FujinInputModule inputModule;
+    FujinPhysicsModule physicModule;
     FujinJumpModule jumpModule;
     FujinSprintModule sprintModule;
     FujinCrouchModule crouchModule;
@@ -96,6 +97,7 @@ public class FujinPlayerMotorEditor : Editor
         speedlineProperty = serializedObject.FindProperty("speedlines");
 
         inputModule = inputProperty.GetValue<FujinInputModule>();
+        physicModule = physicsProperty.GetValue<FujinPhysicsModule>();
         jumpModule = jumpProperty.GetValue<FujinJumpModule>();
         sprintModule = sprintProperty.GetValue<FujinSprintModule>();
         crouchModule = crouchProperty.GetValue<FujinCrouchModule>();
@@ -831,6 +833,15 @@ public class FujinPlayerMotorEditor : Editor
         GUILayout.EndHorizontal();
 
         GUILayout.Space(18);
+
+        if (physicModule.wallStick > 0)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            GUILayout.Toggle(motor.OnWall, "On Wall");
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+        }
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);

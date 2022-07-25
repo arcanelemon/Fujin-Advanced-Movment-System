@@ -47,6 +47,12 @@ public class FujinMovementModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
+            module.airMultiplier = EditorGUILayout.FloatField("Air Multiplier", module.airMultiplier);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
             module.useAcceleration = EditorGUILayout.Toggle("Move Acceleration", module.useAcceleration);
             GUI.enabled = module.useAcceleration;
             module.acceleration = EditorGUILayout.FloatField(module.acceleration);
@@ -755,21 +761,41 @@ public class FujinWallrunModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            EditorGUILayout.FloatField("Min Wall Run Speed", 0);
+            module.speed = EditorGUILayout.FloatField("Wall Run Speed", Mathf.Max(module.speed, 0));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            EditorGUILayout.Toggle("Wall Run Acceleration", true);
-            EditorGUILayout.FloatField(0);
+            module.minHeight = EditorGUILayout.FloatField("Min Height", Mathf.Max(module.minHeight, 0));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            EditorGUILayout.Toggle("Wall Run Speed Boost", true);
-            EditorGUILayout.FloatField(0);
+            module.useAccelaration = EditorGUILayout.Toggle("Wall Run Acceleration", module.useAccelaration);
+            module.accelaration = EditorGUILayout.FloatField(Mathf.Max(module.accelaration, 0));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.useBoost = EditorGUILayout.Toggle("Wall Run Speed Boost", module.useBoost);
+            module.boost = EditorGUILayout.FloatField(Mathf.Max(module.boost, 0));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.useDrag = EditorGUILayout.Toggle("Wall Run Drag", module.useDrag);
+            module.drag = EditorGUILayout.Slider(module.drag, 0, 1);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.useDuration = EditorGUILayout.Toggle("Wall Run Duration", module.useDuration);
+            module.duration = EditorGUILayout.FloatField(Mathf.Max(module.duration, 0));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -820,6 +846,12 @@ public class FujinHeadbobModuleDrawer : FujinModuleDrawer
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
             module.horizontalAmount = EditorGUILayout.Slider("Horizontal Amount", module.horizontalAmount, 0, 1);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.speedMultiplier = EditorGUILayout.Slider("Speed Multiplier", module.speedMultiplier, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1217,10 +1249,13 @@ public class FujinSpeedlinesModuleDrawer : FujinModuleDrawer
 [CustomPropertyDrawer(typeof(FujinPhysicsModule))]
 public class FujinPhysicsModuleDrawer : FujinModuleDrawer
 {
+    SerializedProperty materialProperty;
     FujinPhysicsModule module;
 
     public override void Init(SerializedProperty property)
     {
+        materialProperty = property.FindPropertyRelative("physicMaterial");
+
         initialized = true;
         module = property.GetValue<FujinPhysicsModule>();
     }
@@ -1251,7 +1286,12 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUI.enabled = true;
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
-
+        
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        EditorGUILayout.PropertyField(materialProperty);
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
         GUILayout.Space(5);
         GUILayout.EndVertical();
 
@@ -1268,12 +1308,6 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin);
-        module.turnRateFromVelocity = EditorGUILayout.Toggle("Turn Rate from Velocity", module.turnRateFromVelocity);
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
         GUI.enabled = !module.turnRateFromVelocity;
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
@@ -1281,6 +1315,12 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUILayout.Space(margin);
         GUILayout.EndHorizontal(); 
         GUI.enabled = true;
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        module.turnRateFromVelocity = EditorGUILayout.Toggle("Turn Rate from Velocity", module.turnRateFromVelocity);
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
 
         GUILayout.Space(5);
         GUILayout.EndVertical();
@@ -1337,12 +1377,6 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         module.wallStick = EditorGUILayout.Slider("Wall Stick Amount", module.wallStick, 0, 1);
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin);
-        module.wallStickTilt = EditorGUILayout.Slider("Wall Stick Tilt", module.wallStickTilt, 0, 1);
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
