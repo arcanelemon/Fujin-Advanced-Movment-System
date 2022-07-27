@@ -35,13 +35,12 @@ namespace Fujin
         public FujinMantleModule mantle = new FujinMantleModule();
         public FujinClimbModule climb = new FujinClimbModule();
         public FujinWallrunModule wallrun = new FujinWallrunModule();
-        public FujinHeadbobModule headbob = new FujinHeadbobModule();
         public FujinAutorunModule autorun = new FujinAutorunModule();
         public FujinLeanModule lean = new FujinLeanModule();
         public FujinSlowwalkModule slowwalk = new FujinSlowwalkModule();
         public FujinFreelookModule freelook = new FujinFreelookModule();
         public FujinGrappleModule grapple = new FujinGrappleModule();
-        public FujinSpeedlinesModule speedlines = new FujinSpeedlinesModule();
+        public FujinEffectsModule effects = new FujinEffectsModule();
 
         [SerializeField]
         Transform cameraContainer;
@@ -100,9 +99,8 @@ namespace Fujin
         bool applyWallstick;
         bool cueStand;
         bool headspaceAvailable;
-        bool controlFOV = true;
         bool controlHeight = true;
-        bool canJump = false;
+        bool canJump = true;
         bool jumpDrift = false;
         bool canPound = true;
         bool canGrapple = true;
@@ -123,10 +121,7 @@ namespace Fujin
         float targetHeight;
         float defaultHeight;
         float heightSmoothing = 1;
-        float FOV;
-        float targetFOV;
         float defaultFOV;
-        float FOVsmoothing = 5;
         float tiltRotation;
         float poundHeight;
         float leanDirection;
@@ -134,7 +129,6 @@ namespace Fujin
         bool previousWallCheck;
 
         // float
-        float moveSpeed;
         float slideSpeed;
 
         // counters
@@ -147,8 +141,6 @@ namespace Fujin
         Vector3 normal;
         Vector3 previousVelocity;
         Vector3 previousPosition;
-        Vector3 previousMovementDiff;
-        Vector3 previousSlidePosition;
         Vector3 dashDirection;
         Vector3 poundOrigin;
         Vector3 grapplePoint;
@@ -157,6 +149,7 @@ namespace Fujin
         Collider lastClimbCollider;
         ParticleSystem.EmissionModule speedLinesEmission;
         GameObject grappleObj;
+        Rigidbody grappleRb;
         LineRenderer grapplelineRenderer;
         CapsuleCollider col;
         Camera cam;
@@ -187,9 +180,6 @@ namespace Fujin
         void OnMoveChange(InputAction.CallbackContext context)
         {
             moveInputs = context.ReadValue<Vector2>();
-
-            //if (jumpDrift)
-            //    JumpDrift();
         }
 
         void OnSprintPress(InputAction.CallbackContext context)
@@ -767,34 +757,38 @@ namespace Fujin
             heightOffset = col.height * 2 / defaultHeight;
             targetHeight = defaultHeight;
             cameraOffset.y = defaultHeight;
-            FOV = cam.fieldOfView;
-            targetFOV = FOV;
-            defaultFOV = FOV;
+            defaultFOV = cam.fieldOfView;
             collisionExclusionMask = ~LayerMask.GetMask("Player");
             rb.useGravity = false;
 
-            if (grapple.enable && grapple.prefab.GetComponent<LineRenderer>() == null) // Check grapple
+            if (grapple.enable) // Check grapple
             {
-                Debug.LogError("[Error] Grapple requires component of type <LineRenderer>.");
+                if (grapple.prefab.GetComponent<Rigidbody>() == null)
+                    Debug.LogError("[Error] Grapple requires component of type <Rigidbody>.");
+                if (grapple.prefab.GetComponent<LineRenderer>() == null)
+                    Debug.LogError("[Error] Grapple requires component of type <LineRenderer>.");
             }
 
-            if (speedlines.enable) // Instantiate Speedlines Particle System
+            if (effects.enable) // INIT EFFECTS
             {
-                if (speedlines.prefab == null)
+                if (effects.speedlines.enable) // Instantiate Speedlines Particle System
                 {
-                    Debug.LogError("[ERROR] Speed lines prefab cannot be null.");
-                    return;
-                }
+                    if (effects.speedlines.prefab == null)
+                    {
+                        Debug.LogError("[ERROR] Speed lines prefab cannot be null.");
+                        return;
+                    }
 
-                ParticleSystem p = Instantiate(speedlines.prefab, cam.transform).GetComponent<ParticleSystem>();
-                p.transform.localPosition = Vector3.forward;
-                speedLinesEmission = p.emission;
-                var m = p.main;
-                m.startColor = speedlines.gradient;
-                ParticleSystemRenderer renderer = p.GetComponent<ParticleSystemRenderer>();
-                renderer.lengthScale = 5 + (45 * speedlines.thiness); // clamps thickness between 10 and 50
-                ParticleSystem.ShapeModule shape = p.shape;
-                shape.radius = renderer.lengthScale + speedlines.radius;
+                    ParticleSystem p = Instantiate(effects.speedlines.prefab, cam.transform).GetComponent<ParticleSystem>();
+                    p.transform.localPosition = Vector3.forward;
+                    speedLinesEmission = p.emission;
+                    var m = p.main;
+                    m.startColor = effects.speedlines.gradient;
+                    ParticleSystemRenderer renderer = p.GetComponent<ParticleSystemRenderer>();
+                    renderer.lengthScale = 5 + (45 * effects.speedlines.thiness); // clamps thickness between 10 and 50
+                    ParticleSystem.ShapeModule shape = p.shape;
+                    shape.radius = renderer.lengthScale + effects.speedlines.radius;
+                }
             }
 
             // Initilize Functions
@@ -822,12 +816,12 @@ namespace Fujin
         void FixedUpdate()
         {
             d = Time.deltaTime;
-            HandleCamera();
+            HandleEffects();
 
             HandleMovementStates();
             HandleInputQueue();
             HandleOther();
-            HandlePhysics();
+            CounterPhysics();
         }
 
         /// <summary>
@@ -900,103 +894,63 @@ namespace Fujin
         /// If <code>!grounded</code> use <code>airDrag</code> to Lerp along <code>moveInputs</code>.
         /// Else project along normal vector and Lerp using <code>movementAcceleration && movementDecceleration</code>.
         /// </summary>
-        void Move()
+        void TryMove()
         {
             // movement variables
-            float acceleration;
-            Vector3 targetVelocity;
+            #region Direction
             Vector3 direction;
 
             if (autoRunInput) // Auto Run 
                 direction = (Mathf.Min(1 + moveInputs.y, 1) * transform.forward + moveInputs.x * transform.right).normalized;
             else
                 direction = (moveInputs.y * transform.forward + moveInputs.x * transform.right).normalized;
-
-            #region Movement Tilt
-
-            // Movement Tilt
-            if (movement.useTilt && !leanInput && rb.velocity.magnitude > 0) // have to check if leaning since it also affects tilt
-            {
-                tiltRotation = moveInputs.x * -movement.tiltAngle;
-                Vector3 targetRotation = cameraContainer.localEulerAngles;
-                targetRotation.z = tiltRotation;
-                cameraContainer.localRotation = Quaternion.Lerp(cameraContainer.localRotation, Quaternion.Euler(targetRotation), movement.tiltSpeed * d);
-            }
-
-            #endregion Movement Tilt
-
-            #region Direction Headbob & Sway
-
-            if (grounded)
-            {
+            
+            if(grounded)
                 direction = Vector3.ProjectOnPlane(direction, normal); // project onto normal if grounded
 
-                // Headbob && Movement Sway
-                if (rb.velocity.magnitude > 0)// we run into issues when speed is 0 
-                {
-                    if (headbob.enable)
-                    {
-                        float yBobAmount;
-                        float xBobAmount;
-                        Vector3 targetPosition = cameraContainer.localPosition;
+            #endregion Direction
 
-                        if (moveInputs != Vector2.zero)
-                        {
-                            float t = Time.time;
-                            float moveMultiplier = Mathf.Max((rb.velocity.magnitude / movement.speed / 6) * headbob.speedMultiplier, 1 / 6f);
-                            yBobAmount = cameraOffset.y + (headbob.verticalAmount * moveMultiplier * Mathf.Sin(currSpeed * 2 * t));
-                            xBobAmount = cameraOffset.x + (headbob.horizontalAmount * moveMultiplier * Mathf.Sin(currSpeed * t));
-                        }
-                        else
-                        {
-                            yBobAmount = Mathf.Lerp(targetPosition.y, cameraOffset.y, currSpeed * d);
-                            xBobAmount = Mathf.Lerp(targetPosition.x, cameraOffset.x, currSpeed * d);
-                        }
+            #region Auxillary
 
-                        targetPosition.y = yBobAmount;
-                        targetPosition.x = xBobAmount;
-                        cameraContainer.localPosition = targetPosition;
-                    }
-                }
-            }
+            if (movement.tiltAngle > 0 && rb.velocity.magnitude > 0)
+                Tilt(movement.tiltAngle, movement.tiltSpeed);
 
-            #endregion Direction and Headbob
-
-            #region Acceleration
-
-            //if we are no longer pressing and input, carryon moving in the last direction we were set to move in
-            if (moveInputs.x == 0 && moveInputs.y == 0 && !autoRunInput) // need to account for auto run since using input calcs
-            {
-                acceleration = movement.useDecceleration ? movement.decceleration : 1000;
-                targetVelocity = Vector3.zero;
-            }
-            else
-            {
-                acceleration = movement.useAcceleration ? movement.acceleration : 1000;
-                targetVelocity = direction;
-                targetVelocity *= currSpeed;
-            }
-
-            #endregion Acceleration
+            #endregion Auxillary
 
             #region Apply
 
-            Vector3 velocity;
-            if (grounded) 
-            {
-                acceleration = 1 / acceleration;
-                velocity = Vector3.Lerp(rb.velocity, targetVelocity, acceleration * d);
-                previousMovementDiff = Vector3.zero;
-            } else
-            {
-                targetVelocity *= movement.airMultiplier;
-                velocity = rb.velocity - previousMovementDiff + targetVelocity;
-                previousMovementDiff = targetVelocity;
-            }
-
-            rb.velocity = velocity;
+            if (grounded)
+                Move(direction);
+            else if (jumpDrift)
+                JumpDrift();
+            else
+                AirMove(direction);
 
             #endregion Apply
+        }
+
+        void Move(Vector3 direction) 
+        {
+            Vector3 targetVelocity = Vector3.Lerp(rb.velocity, direction * currSpeed, movement.acceleration);
+            rb.velocity = targetVelocity;
+        }
+
+        void AirMove(Vector3 direction) 
+        {
+            Vector3 projVel = Vector3.Project(rb.velocity, direction);
+            bool isAway = Vector3.Dot(direction, projVel) <= 0f;
+
+            if (projVel.magnitude < movement.airSpeed || isAway)
+            {
+                 Vector3 targetVelocity = direction.normalized * movement.airAcceleration;
+
+                if (!isAway)
+                    targetVelocity = Vector3.ClampMagnitude(targetVelocity, movement.airSpeed - projVel.magnitude);
+                else
+                    targetVelocity = Vector3.ClampMagnitude(targetVelocity, movement.airSpeed + projVel.magnitude);
+
+                rb.AddForce(targetVelocity, ForceMode.VelocityChange);
+            }
         }
 
         /// <summary>
@@ -1013,7 +967,7 @@ namespace Fujin
             #region Double Jump
 
             //  Double jump if not grounded and enabled
-            if (!grounded && !canJump)
+            if (!grounded || !canJump)
             {
                 if (!jump.enableDoubleJumps || (onWall && jump.enableWallJump))
                     return;
@@ -1058,55 +1012,47 @@ namespace Fujin
                     }
                 }
 
-                #endregion Jump Direction
+            #endregion Jump Direction
 
             #region Apply Force
 
             // Reset y velocity and add forces
+
+            canJump = false;
             if (rb.velocity.y < 0)
                 rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
             rb.AddForce(direction * force, ForceMode.Impulse);
             if (jump.enableDrift)
                 StartYieldJumpDriftCoroutine();
-            canJump = false;
-
             #endregion Apply Force
         }
 
         void JumpDrift()
         {
-            Vector3 localVelocity = transform.InverseTransformDirection(rb.velocity);
-            Vector3 direction = localVelocity.normalized;
+            float magnitude = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+            float force = magnitude;
 
-            // Redirect velocity based on input for
-            Vector3 temp = direction;
+            if (magnitude < jump.driftStrength)
+                force =  jump.driftStrength;
 
-            // Redirect velocitiees
-            if (moveInputs.x != 0 && Mathf.Abs(direction.z) > Mathf.Abs(direction.x))
-                temp.x = Mathf.Abs(direction.z) * moveInputs.x;
-            else if ((direction.x > 0.1 && moveInputs.x < -0.1) || (direction.x < -0.1 && moveInputs.x > 0.1))
-                temp.x = direction.x - 2 * direction.x * jump.driftRedirect;
-            else if (moveInputs.x == 0)
-                temp.x = 0;
+            Vector3 velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+            Vector3 targetVelocity = force * 
+                (transform.right * moveInputs.x
+                + transform.forward * moveInputs.y).normalized;
+            targetVelocity = Vector3.Lerp(velocity, targetVelocity, jump.driftRedirect);
+            rb.velocity =  targetVelocity + Vector3.up * rb.velocity.y;
+        }
 
-            if (moveInputs.y != 0 && Mathf.Abs(direction.x) > Mathf.Abs(direction.z))
-                temp.z = Mathf.Abs(direction.x) * moveInputs.y;
-            else if ((direction.z > 0.1 && moveInputs.y < -0.1) || (direction.z < -0.1 && moveInputs.y > 0.1))
-                temp.z = direction.z - 2* direction.z * jump.driftRedirect;
-            else if (moveInputs.y == 0)
-                temp.z = 0;
-
-            temp.y = 0;
-            localVelocity.y = 0;
-
-            float speed = jump.driftStrength
-                * 100;
-            direction = transform.TransformDirection(temp);
-            Debug.Log(direction);
-            rb.velocity = speed * direction;
-
-            if (drawGizmos)
-                Debug.DrawLine(transform.position, transform.position + direction * speed, Color.red, 10);
+        void Tilt(float angle, float speed) 
+        {
+            // Movement Tilt
+            if (!leanInput && rb.velocity.magnitude > 0) // have to check if leaning since it also affects tilt
+            {
+                tiltRotation = moveInputs.x * -angle;
+                Vector3 targetRotation = cameraContainer.localEulerAngles;
+                targetRotation.z = tiltRotation;
+                cameraContainer.localRotation = Quaternion.Lerp(cameraContainer.localRotation, Quaternion.Euler(targetRotation), speed * d);
+            }
         }
 
         /// <summary>
@@ -1120,7 +1066,6 @@ namespace Fujin
             this.autoRunInput = autoRun;
 
             sprintInput = true;
-            targetFOV = defaultFOV * 1.1f;
             currSpeed = movement.speed * sprint.speedMultiplier;
             movementState = MovementState.Sprinting;
         }
@@ -1155,10 +1100,9 @@ namespace Fujin
         {
             sprintInput = false;
             slideInput = false;
-            targetFOV = defaultFOV * 1.1f;
             targetHeight = defaultHeight * slide.height;
 
-            previousSlidePosition = rb.position;
+            //rb.velocity = Vector3.ProjectOnPlane(transform.forward, normal) * slideForce;
             rb.AddForce(Vector3.ProjectOnPlane(transform.forward, normal) * slideForce, ForceMode.Impulse);
             movementState = MovementState.Sliding;
         }
@@ -1169,6 +1113,9 @@ namespace Fujin
         /// </summary>
         void Slide()
         {
+            if (slide.tiltAngle > 0)
+                Tilt(slide.tiltAngle, slide.tiltSpeed);
+
             if (!grounded)
                 return;
 
@@ -1210,15 +1157,22 @@ namespace Fujin
         /// StartDash
         /// Sets <code>movementState</code> to <code>MovementState.Dashing</code> and inits state.
         /// </summary>
-        void StartDash() 
+        void StartDash()
         {
             // Calculate Dash Direction based on input and axis
             Vector3 direction = Vector3.zero;
 
-            direction += transform.forward * (moveInputs.y > 0.1f && dash.axis.z > 0 ? 1 : 0);
-            direction += -transform.forward * (moveInputs.y < -0.1f && dash.axis.w > 0 ? 1 : 0);
-            direction += transform.right * (moveInputs.x > 0.1f && dash.axis.x > 0 ? 1 : 0);
-            direction += -transform.right * (moveInputs.x < -0.1f && dash.axis.y > 0 ? 1 : 0);
+            if (dash.omnidirectional) 
+            {
+                direction = cam.transform.forward;
+            }
+            else
+            {
+                direction += transform.forward * (moveInputs.y > 0.1f && dash.axis.z > 0 ? 1 : 0);
+                direction += -transform.forward * (moveInputs.y < -0.1f && dash.axis.w > 0 ? 1 : 0);
+                direction += transform.right * (moveInputs.x > 0.1f && dash.axis.x > 0 ? 1 : 0);
+                direction += -transform.right * (moveInputs.x < -0.1f && dash.axis.y > 0 ? 1 : 0);
+            }
 
             // If no input, set direction to only enabled axis
             if (direction == Vector3.zero)
@@ -1231,7 +1185,6 @@ namespace Fujin
 
             // Set direction and control state
             rb.velocity = Vector3.zero;
-            targetFOV = defaultFOV * 1.1f;
             dashDirection = direction;
             StartCoroutine(YieldDashTime());
             StartCoroutine(YieldDashCooldown());
@@ -1248,7 +1201,7 @@ namespace Fujin
             Vector3 velocity = dashDirection;
 
             // project onto normal if grounded
-            if (grounded)
+            if (grounded && !dash.omnidirectional)
                 velocity = Vector3.ProjectOnPlane(dashDirection, normal);
 
             velocity = dash.force * 10 * velocity.normalized;
@@ -1439,10 +1392,12 @@ namespace Fujin
         {
             grapplePoint = cam.transform.position + cam.transform.forward * grapple.range;
 
-            grappleObj = Instantiate(grapple.prefab);
-            grapplelineRenderer = grappleObj.GetComponent<LineRenderer>();
-            grappleObj.transform.position = transform.position + -transform.right + Vector3.up * cameraOffset.y;
+            grappleObj = Instantiate(grapple.prefab, cameraContainer);
+            grappleObj.transform.localPosition =
+                new Vector3(grapple.offset.x, grapple.offset.y, 0);
             grappleDistance = Vector3.Distance(grappleObj.transform.position, grapplePoint);
+            grappleRb = grappleObj.GetComponent<Rigidbody>();
+            grapplelineRenderer = grappleObj.GetComponent<LineRenderer>();
             movementState = MovementState.ThrowingGrapple;
         }
         
@@ -1455,13 +1410,17 @@ namespace Fujin
             if (!returnGrapple && grappleDistance < 0.1f) // fire backward
             {
                 returnGrapple = true;
-                grapplePoint = transform.position + -transform.right + Vector3.up * cameraOffset.y;
             }
             else if (returnGrapple && grappleDistance < 0.1f) // end
             { 
                 EndGrapple();
                 ResetMovement();
                 return;
+            } else if (returnGrapple) 
+            {
+                grapplePoint = transform.TransformPoint(
+                        new Vector3(grapple.offset.x + cameraOffset.x,
+                        grapple.offset.y + cameraOffset.y, 0));
             }
 
             CheckGrapple();
@@ -1477,12 +1436,10 @@ namespace Fujin
         {
             float speed = rb.velocity.magnitude;
             Vector3 direction = ((grapplePoint - cam.transform.position) + cam.transform.forward).normalized;
-            Vector3 counterDirection = (1.1f * cam.transform.forward) + 0.4f * (transform.right * moveInputs.x);
+            Vector3 counterDirection = ((1.5f * cam.transform.forward) + 0.5f * (transform.right * moveInputs.x)) * grapple.control;
 
             // Move Grapple
             StretchGrapple(grapple.speed);
-
-            // Limit player rotation
 
             // Move Player at angle between grapple and camera
             rb.velocity = (direction + counterDirection).normalized * grapple.speed;
@@ -1516,14 +1473,13 @@ namespace Fujin
         {
             RaycastHit hit;
             Vector3 castOrigin = cam.transform.position;
-            Vector3 direction = grappleObj.transform.position - castOrigin;
-            float distance = Vector3.Distance(castOrigin, grappleObj.transform.position);
+            Vector3 direction = grappleRb.position - castOrigin;
+            float distance = Vector3.Distance(castOrigin, grappleRb.position);
             if (Physics.Raycast(castOrigin, direction, out hit, distance, collisionExclusionMask))
             {
                 ResetMovement();
                 canGrapple = false;
                 numJumps = jump.doubleJumpCount;
-                targetFOV = defaultFOV * 1.1f;
                 grappleObj.transform.position = hit.point;
                 grapplePoint = hit.point;
                 rb.velocity = Vector3.zero;
@@ -1535,7 +1491,6 @@ namespace Fujin
             } else if (drawGizmos) 
             {
                 Debug.DrawLine(castOrigin, castOrigin + direction * distance, Color.green, d);
-
             }
         }
 
@@ -1547,10 +1502,12 @@ namespace Fujin
         void StretchGrapple(float speed)
         {
             // Move Grapple
-            Vector3 direction = grapplePoint - grappleObj.transform.position;
-            grappleObj.transform.Translate(direction * speed * d);
-            grapplelineRenderer.SetPosition(0, transform.position + -transform.right + Vector3.up * cameraOffset.y);
-            grapplelineRenderer.SetPosition(1, grappleObj.transform.position);
+            Vector3 direction = (grapplePoint - grappleRb.position).normalized;
+            grappleRb.MovePosition(grappleRb.position + direction * speed * d);
+            grapplelineRenderer.SetPosition(0, transform.TransformPoint(
+                        new Vector3(grapple.offset.x + cameraOffset.x,
+                        grapple.offset.y + cameraOffset.y, 0)));
+            grapplelineRenderer.SetPosition(1, grappleRb.position);
         }
 
         /// <summary>
@@ -1652,7 +1609,6 @@ namespace Fujin
             autoRunInput = false;
             slideSpeed = 0;
 
-            targetFOV = defaultFOV;
             targetHeight = defaultHeight;
             currSpeed = movement.speed;
             movementState = MovementState.Default;
@@ -1686,7 +1642,7 @@ namespace Fujin
                     if (moveInputs.y < 0.1f && !autoRunInput) // account for no input or auto run
                         ResetMovement();
                     else
-                        Move();
+                        TryMove();
                     break;
                 case MovementState.Sliding:
                     Slide();
@@ -1705,13 +1661,13 @@ namespace Fujin
                     break;
                 case MovementState.ThrowingGrapple:
                     ThrowGrapple();
-                    Move();
+                    TryMove();
                     break;
                 case MovementState.Grappling:
                     Grapple();
                     break;
                 default:
-                    Move();
+                    TryMove();
                     break;
             }
 
@@ -1783,13 +1739,6 @@ namespace Fujin
             {
                 EndGrapple();
             }
-
-            // SPEED LINES
-            if (speedlines.enable)
-            {
-                float speed = Mathf.Clamp(rb.velocity.magnitude - speedlines.minVelocity, 0, speedlines.maxVelocity);
-                speedLinesEmission.rateOverTimeMultiplier = Mathf.Pow(speed, 1 + speedlines.curve) * speedlines.amount;
-            }
         }
 
         #endregion Actions
@@ -1822,7 +1771,6 @@ namespace Fujin
         /// </summary>
         void CheckGround()
         {
-
             Vector3 origin = transform.position + Vector3.up * (groundCheckRadius + collisionThreshold);
             Vector3 direction = Vector3.down;
 
@@ -1857,20 +1805,12 @@ namespace Fujin
 
                     if (slideInput && movementState != MovementState.Sliding)
                     {
-                        StartSlide(0);
-
-                        //if (Mathf.Abs(rb.position.y - previousSlidePosition.y) > 1f || slideInput)
-                        //{
-                        //    Vector3 localVelocity = transform.InverseTransformDirection(previousVelocity);
-                        //    localVelocity = new Vector3(Mathf.Abs(localVelocity.x), Mathf.Abs(localVelocity.y), Mathf.Abs(localVelocity.z));
-                        //    float additionalSlideForce = localVelocity.z > localVelocity.y ? localVelocity.z : localVelocity.y;
-                        //    float slideAngle = Vector3.Angle(previousVelocity.normalized, -Vector3.up);
-
-                        //    if (slideAngle > 0)
-                        //        StartSlide(slide.force * ( 1- (slideAngle / 90)) * additionalSlideForce);
-
-                        //    previousSlidePosition = rb.position;
-                        //}
+                        float force = 0;
+                        float slideAngle = Vector3.Angle(previousVelocity.normalized, -Vector3.up);
+                        float magnitude = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+                        if (magnitude < slide.maxSpeed)
+                            force = slide.force;
+                        StartSlide(force * Mathf.Max(slideAngle / 90, 0.5f));
                     }
 
                     if (movementState == MovementState.Pounding)
@@ -2160,13 +2100,12 @@ namespace Fujin
         /// Set and limit physics based on gravity, slopes, and maximum Velocity.
         /// <remarks>Should be called last in FixedUpdate.</remarks>
         /// </summary>
-        void HandlePhysics()
+        void CounterPhysics()
         {
-            #region Counter Physics
-
             // Gravity
             if (movementState <= MovementState.ThrowingGrapple) // gravity states
             {
+                // Wall stick
                 if (!previousWallCheck && onWall && physics.wallStick > 0)
                 {
                     applyWallstick = true;
@@ -2192,9 +2131,16 @@ namespace Fujin
             }
 
             // Slopes
-            if (grounded && normalAngle > physics.slopeAngle)
+            if (grounded && normalAngle > 0)
             {
-                ProjectDownSlope(physics.slopeForce * (normalAngle % 45));
+                //normalAngle > physics.slopeAngle
+                float slopeDiff = (physics.slopeAngle * physics.slopeFallOff);
+                float slopeRange =  physics.slopeAngle - slopeDiff;
+                if (normalAngle > slopeRange) 
+                {
+                    float fallOffForce = slopeDiff < 0.01f? 0 : (normalAngle - slopeRange) / slopeDiff;
+                    ProjectDownSlope(physics.slopeForce * fallOffForce);
+                }
             }
 
             // Cap Player Max Velocity
@@ -2227,8 +2173,6 @@ namespace Fujin
                     lookResistance += 1 - physics.airTurnRate;
             }
 
-            #endregion Counter Physics
-
             previousVelocity = rb.velocity;
             previousPosition = rb.position;
         }
@@ -2246,19 +2190,85 @@ namespace Fujin
 
         #endregion Physics
 
-        /// <summary>
-        /// HandleCamera
-        /// Handles values driven to camera.
-        /// </summary>
-        void HandleCamera()
+        #region Effects
+
+        void HandleEffects() 
         {
-            // Control FOV
-            if (controlFOV && !Mathf.Approximately(FOV, targetFOV))
+            if (!effects.enable)
+                return;
+
+            #region Headbob
+
+            if (effects.headbob.enable
+                && ((movementState <= MovementState.SlowWalk && movementState != MovementState.Sliding) || movementState == MovementState.ThrowingGrapple)
+                && grounded && rb.velocity.magnitude > 0)
             {
-                FOV = Mathf.Lerp(FOV, targetFOV, FOVsmoothing * d);
-                cam.fieldOfView = FOV;
+                float yBobAmount;
+                float xBobAmount;
+                Vector3 targetPosition = cameraContainer.localPosition;
+
+                if (moveInputs != Vector2.zero)
+                {
+                    float t = Time.time;
+                    float moveMultiplier = Mathf.Max((rb.velocity.magnitude / movement.speed / 6) * effects.headbob.speedMultiplier, 1 / 6f);
+                    yBobAmount = cameraOffset.y + (effects.headbob.verticalAmount * moveMultiplier * Mathf.Sin(currSpeed * 2 * t));
+                    xBobAmount = cameraOffset.x + (effects.headbob.horizontalAmount * moveMultiplier * Mathf.Sin(currSpeed * t));
+                }
+                else
+                {
+                    yBobAmount = Mathf.Lerp(targetPosition.y, cameraOffset.y, currSpeed * d);
+                    xBobAmount = Mathf.Lerp(targetPosition.x, cameraOffset.x, currSpeed * d);
+                }
+
+                targetPosition.y = yBobAmount;
+                targetPosition.x = xBobAmount;
+                cameraContainer.localPosition = targetPosition;
             }
+
+            #endregion Headbob
+
+            #region Movement Sway
+
+            if (effects.sway.enable
+                && ((movementState <= MovementState.SlowWalk && movementState != MovementState.Sliding) || movementState == MovementState.ThrowingGrapple)
+                && grounded && rb.velocity.magnitude > 0)
+            {
+                // Fall Sway
+
+                // Move Sway
+            }
+
+            #endregion Movement Sway
+
+            #region FOV
+            if(effects.fov.enable)
+            {
+                float targetFov;
+                float speed = rb.velocity.magnitude;
+                float diff = effects.fov.maxVelocity - effects.fov.minVelocity;
+                if (speed <= effects.fov.minVelocity || diff == 0)
+                    targetFov = defaultFOV;
+                else
+                    targetFov = defaultFOV *
+                        ((effects.fov.multiplier  - 1) *
+                        ((speed - effects.fov.minVelocity) / diff) + 1);
+
+                float fov = Mathf.Lerp(cam.fieldOfView, targetFov, effects.fov.speed * d);
+                cam.fieldOfView = fov;
+            }
+            #endregion FOV
+
+            #region Speed lines
+            // SPEED LINES
+            if (effects.speedlines.enable)
+            {
+                float speed = Mathf.Clamp(rb.velocity.magnitude - effects.speedlines.minVelocity, 0, effects.speedlines.maxVelocity);
+                speedLinesEmission.rateOverTimeMultiplier = Mathf.Pow(speed, 1 + effects.speedlines.curve) * effects.speedlines.amount;
+            }
+            #endregion Speed lines
         }
+
+        #endregion Effects
 
         #region Coroutines
 
@@ -2363,7 +2373,6 @@ namespace Fujin
         IEnumerator YieldDashTime()
         {
             yield return new WaitForSeconds(dash.duration);
-            rb.velocity = new Vector3(0, rb.velocity.y, 0);
             ResetMovement();
         }
 
@@ -2432,26 +2441,6 @@ namespace Fujin
         #endregion Private Methods
 
         #region Public Methods
-
-        /// <summary>
-        /// SetTargetFOV
-        /// Sets the target fov of the main camera to lerp towards.
-        /// </summary>
-        /// <param name="fov">the target fov</param>
-        public void SetTargetFOV(float fov)
-        {
-            targetFOV = fov;
-        }
-
-        /// <summary>
-        /// ControlFOV
-        /// Turn off/on fov control of the main camera
-        /// </summary>
-        /// <param name="on">the control state toggle</param>
-        public void ControlFOV(bool on)
-        {
-            controlFOV = on;
-        }
 
         /// <summary>
         /// ControlHeight

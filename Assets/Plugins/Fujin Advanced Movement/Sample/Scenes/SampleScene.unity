@@ -488,7 +488,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 100
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -885,6 +885,14 @@ MonoBehaviour:
         m_Groups: 
         m_Action: Jump
         m_Flags: 0
+      - m_Name: 
+        m_Id: 7d951d31-2d27-47d4-9861-2164a3eb3bbd
+        m_Path: <Mouse>/scroll
+        m_Interactions: 
+        m_Processors: 
+        m_Groups: 
+        m_Action: Jump
+        m_Flags: 0
     sprintAction:
       m_Name: Sprint
       m_Type: 0
@@ -910,8 +918,8 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings:
       - m_Name: 
-        m_Id: 7b6a4654-c94b-441f-8814-d7fe6f367c42
-        m_Path: <Mouse>/backButton
+        m_Id: ab9d5319-8694-48ba-8208-83089b5061ec
+        m_Path: <Keyboard>/c
         m_Interactions: 
         m_Processors: 
         m_Groups: 
@@ -1049,16 +1057,17 @@ MonoBehaviour:
     enable: 0
     foldout: 0
     gravityMultiplier: 30
-    limitVelocity: 0
-    maxVelocity: {x: 0, y: 0}
+    limitVelocity: 1
+    maxVelocity: {x: 60, y: 90}
     airDrag: 0.2
     airTurnRate: 1
     turnRateFromVelocity: 0
     stepHeight: 0.1
-    stepDepth: 0
-    slopeAngle: 45
-    slopeForce: 0
-    wallStick: 1
+    stepDepth: 0.265
+    slopeAngle: 50
+    slopeForce: 10
+    slopeFallOff: 0.4
+    wallStick: 0
     useWallStickDuration: 0
     wallStickDuration: 0
     physicMaterial: {fileID: 13400000, guid: 54362fa1f44114a439f693807747d532, type: 2}
@@ -1066,28 +1075,27 @@ MonoBehaviour:
     enable: 0
     foldout: 0
     speed: 8
-    acceleration: 0.1
-    airMultiplier: 0.5
-    decceleration: 0.1
-    tiltAngle: 5
+    acceleration: 0.2
+    airSpeed: 4
+    airAcceleration: 0.1
+    tiltAngle: 0
     tiltSpeed: 5
     useAcceleration: 1
-    useDecceleration: 1
     useTilt: 0
   jump:
     enable: 1
     foldout: 0
     doubleJumpCount: 1
     force: 8
-    gracePeriod: 0
+    gracePeriod: 0.1
     doubleJumpforce: 12
     enableDoubleJumps: 1
     wallJumpforce: 0
     enableWallJump: 1
-    driftPeriod: 0
-    driftStrength: 0
-    driftRedirect: 0
-    enableDrift: 0
+    driftPeriod: 0.5
+    driftStrength: 5
+    driftRedirect: 0.1
+    enableDrift: 1
   sprint:
     enable: 1
     foldout: 0
@@ -1105,20 +1113,24 @@ MonoBehaviour:
     height: 0.5
     force: 10
     friction: 0.2
+    maxSpeed: 25
+    tiltAngle: 5
+    tiltSpeed: 1
     control: 1
     infinite: 0
     hold: 0
   dash:
-    enable: 0
+    enable: 1
     foldout: 0
     count: 1
-    force: 10
-    duration: 0.1
+    force: 5
+    duration: 0.2
     cooldownTime: 1
     canDashInAir: 1
+    omnidirectional: 1
     axis: {x: 1, y: 1, z: 1, w: 1}
   pound:
-    enable: 0
+    enable: 1
     foldout: 0
     force: 10
     duration: 2
@@ -1130,20 +1142,20 @@ MonoBehaviour:
     multiplyByHeight: 1
     useDuration: 1
   mantle:
-    enable: 0
+    enable: 1
     foldout: 0
     speed: 10
     height: 2
     transitionFromGround: 0
   climb:
-    enable: 0
-    foldout: 1
+    enable: 1
+    foldout: 0
     speed: 5
     useDuration: 1
     duration: 3
     transitionFromGround: 0
   wallrun:
-    enable: 0
+    enable: 1
     foldout: 0
     speed: 0
     accelaration: 0
@@ -1155,12 +1167,6 @@ MonoBehaviour:
     drag: 0
     useDuration: 0
     duration: 0
-  headbob:
-    enable: 0
-    foldout: 0
-    verticalAmount: 0.2
-    horizontalAmount: 0.1
-    speedMultiplier: 1
   autorun:
     enable: 0
     foldout: 0
@@ -1179,7 +1185,7 @@ MonoBehaviour:
     speedMultiplier: 0.3
   freelook:
     enable: 0
-    foldout: 1
+    foldout: 0
     hold: 1
     axis: {x: 1, y: 1}
     resetSpeed: 5
@@ -1189,57 +1195,95 @@ MonoBehaviour:
   grapple:
     enable: 1
     foldout: 0
-    range: 30
+    range: 50
     throwSpeed: 15
     speed: 30
-    maxAngle: 90
+    maxAngle: 120
+    control: 1
     lookResistance: 0.5
-    cooldownTime: 5
+    cooldownTime: 1
+    offset: {x: -1, y: 0}
     prefab: {fileID: 2992664888159154120, guid: 7098cf68dac0e7b458888a281884342b, type: 3}
-  speedlines:
+  effects:
     enable: 1
-    foldout: 0
-    amount: 5
-    thiness: 0
-    radius: 0.6
-    curve: 0.2
-    minVelocity: 8
-    maxVelocity: 40
-    gradient:
-      serializedVersion: 2
-      key0: {r: 0, g: 0, b: 0, a: 1}
-      key1: {r: 0, g: 0, b: 0, a: 0}
-      key2: {r: 0, g: 0, b: 0, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 65535
-      ctime2: 0
-      ctime3: 0
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_NumColorKeys: 2
-      m_NumAlphaKeys: 2
-    prefab: {fileID: 7028699022634694380, guid: 9265dd0ed158f6740a7d7cba86757531, type: 3}
+    foldout: 1
+    headbob:
+      enable: 1
+      verticalAmount: 0.1
+      horizontalAmount: 0.1
+      speedMultiplier: 1
+    sway:
+      enable: 1
+      idleFoldout: 0
+      lookFoldout: 0
+      moveFoldout: 0
+      fallFoldout: 0
+      impactFoldout: 0
+      idleTilt: 0
+      idleOffset: {x: 0, y: 0}
+      idleSpeed: 0
+      lookTilt: 0
+      lookOffset: 0
+      lookSpeed: 0
+      moveTilt: 0
+      moveOffset: 0
+      moveSpeed: 0
+      fallTilt: 0
+      fallOffset: 0
+      fallSpeed: 0
+      impactTilt: 0
+      impactOffset: 0
+      impactSpeed: 0
+      container: {fileID: 0}
+    fov:
+      enable: 1
+      multiplier: 1.2
+      speed: 5
+      minVelocity: 10
+      maxVelocity: 20
+    speedlines:
+      enable: 1
+      amount: 1
+      thiness: 0
+      radius: 0.5
+      curve: 0
+      minVelocity: 10
+      maxVelocity: 45
+      gradient:
+        serializedVersion: 2
+        key0: {r: 0, g: 0, b: 0, a: 0}
+        key1: {r: 0, g: 0, b: 0, a: 0.78431374}
+        key2: {r: 1, g: 1, b: 1, a: 0}
+        key3: {r: 0, g: 0, b: 0, a: 0}
+        key4: {r: 0, g: 0, b: 0, a: 0}
+        key5: {r: 0, g: 0, b: 0, a: 0}
+        key6: {r: 0, g: 0, b: 0, a: 0}
+        key7: {r: 0, g: 0, b: 0, a: 0}
+        ctime0: 0
+        ctime1: 65535
+        ctime2: 65535
+        ctime3: 0
+        ctime4: 0
+        ctime5: 0
+        ctime6: 0
+        ctime7: 0
+        atime0: 0
+        atime1: 1542
+        atime2: 65535
+        atime3: 0
+        atime4: 0
+        atime5: 0
+        atime6: 0
+        atime7: 0
+        m_Mode: 0
+        m_NumColorKeys: 2
+        m_NumAlphaKeys: 3
+      prefab: {fileID: 7028699022634694380, guid: 9265dd0ed158f6740a7d7cba86757531, type: 3}
   cameraContainer: {fileID: 1768827082}
   drawGizmos: 1
-  inputFoldout: 1
+  inputFoldout: 0
   featuresFoldout: 0
-  morefeaturesFoldout: 1
+  morefeaturesFoldout: 0
   configFoldout: 1
   debugFoldout: 1
   hideMouseOnAwake: 1

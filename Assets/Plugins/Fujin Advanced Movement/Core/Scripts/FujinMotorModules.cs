@@ -14,22 +14,13 @@ namespace Fujin
     {
         public float speed;
         public float acceleration;
-        public float airMultiplier;
-        public float decceleration;
+        public float airSpeed;
+        public float airAcceleration;
         public float tiltAngle;
         public float tiltSpeed;
 
         public bool useAcceleration;
-        public bool useDecceleration;
         public bool useTilt;
-    }
-
-    [System.Serializable]
-    public class FujinHeadbobModule : FujinMotorModule
-    {
-        public float verticalAmount;
-        public float horizontalAmount;
-        public float speedMultiplier;
     }
 
     [System.Serializable]
@@ -69,6 +60,9 @@ namespace Fujin
         public float height;
         public float force;
         public float friction;
+        public float maxSpeed;
+        public float tiltAngle;
+        public float tiltSpeed;
         public float control;
         public bool infinite;
         public bool hold;
@@ -82,6 +76,7 @@ namespace Fujin
         public float duration;
         public float cooldownTime;
         public bool canDashInAir;
+        public bool omnidirectional;
         public Vector4 axis;
     }
 
@@ -136,17 +131,6 @@ namespace Fujin
     {
         public bool hold;
         public float speedMultiplier;
-
-    }
-
-    [System.Serializable]
-    public class FujinSwayModule : FujinMotorModule 
-    {
-        public float speed;
-        public Vector2 max;
-        public float idleAmount;
-        public float lookAmount;
-        public float fallAmount;
     }
 
     [System.Serializable]
@@ -176,28 +160,87 @@ namespace Fujin
     }
 
     [System.Serializable]
-    public class FujinSpeedlinesModule : FujinMotorModule
-    {
-        public float amount;
-        public float thiness;
-        public float radius;
-        public float curve;
-        public float minVelocity;
-        public float maxVelocity;
-        public Gradient gradient;
-        public GameObject prefab;
-    }
-
-    [System.Serializable]
     public class FujinGrappleModule : FujinMotorModule
     {
         public float range;
         public float throwSpeed;
         public float speed;
         public float maxAngle;
+        public float control;
         public float lookResistance;
         public float cooldownTime;
+        public Vector2 offset;
         public GameObject prefab;
+    }
+
+    [System.Serializable]
+    public class FujinEffectsModule : FujinMotorModule
+    {
+        public Headbob headbob = new Headbob();
+        public Sway sway = new Sway();
+        public FOV fov = new FOV();
+        public Speedlines speedlines = new Speedlines();
+
+        [System.Serializable]
+        public class Headbob
+        {
+            public bool enable;
+            public float verticalAmount;
+            public float horizontalAmount;
+            public float speedMultiplier;
+        }
+
+        [System.Serializable]
+        public class Sway
+        {
+            public bool enable;
+            public bool idleFoldout;
+            public bool lookFoldout;
+            public bool moveFoldout;
+            public bool fallFoldout;
+            public bool impactFoldout;
+            public float idleTilt;
+            public Vector2 idleOffset; 
+            public float idleSpeed;
+            public float lookTilt;
+            public float lookOffset; 
+            public float lookSpeed;
+            public float moveTilt;
+            public float moveOffset; 
+            public float moveSpeed;
+            public float fallTilt;
+            public float fallOffset; 
+            public float fallSpeed;
+            public float impactTilt;
+            public float impactOffset; 
+            public float impactSpeed;
+
+            public Transform container;
+        }
+
+        [System.Serializable]
+        public class FOV 
+        {
+            public bool enable;
+            public float multiplier;
+            public float speed;
+            public float minVelocity;
+            public float maxVelocity;
+        }
+
+        [System.Serializable]
+        public class Speedlines
+        {
+            public bool enable;
+            public float amount;
+            public float thiness;
+            public float radius;
+            public float curve;
+            public float minVelocity;
+            public float maxVelocity;
+            public Gradient gradient;
+            public GameObject prefab;
+        }
     }
 
     [System.Serializable]
@@ -213,6 +256,7 @@ namespace Fujin
         public float stepDepth;
         public float slopeAngle;
         public float slopeForce;
+        public float slopeFallOff;
         public float wallStick;
         public bool useWallStickDuration;
         public float wallStickDuration;
