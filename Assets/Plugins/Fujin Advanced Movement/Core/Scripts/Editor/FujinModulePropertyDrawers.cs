@@ -47,45 +47,37 @@ public class FujinMovementModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.airMultiplier = EditorGUILayout.FloatField("Air Multiplier", module.airMultiplier);
+            module.acceleration = EditorGUILayout.FloatField("Move Acceleration", module.acceleration);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.airSpeed = EditorGUILayout.FloatField("Air Speed", module.airSpeed);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.useAcceleration = EditorGUILayout.Toggle("Move Acceleration", module.useAcceleration);
-            GUI.enabled = module.useAcceleration;
-            module.acceleration = EditorGUILayout.FloatField(module.acceleration);
-            GUI.enabled = true;
+            module.airAcceleration = EditorGUILayout.FloatField("Air Acceleration", module.airAcceleration);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.tiltAngle = EditorGUILayout.Slider("Tilt Angle", module.tiltAngle, 0, 30);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.useDecceleration = EditorGUILayout.Toggle("Move Decceleration", module.useDecceleration);
-            GUI.enabled = module.useDecceleration;
-            module.decceleration = EditorGUILayout.FloatField(module.decceleration);
-            GUI.enabled = true;
+            module.tiltSpeed = EditorGUILayout.FloatField("Tilt Speed", Mathf.Max(0.01f, module.tiltSpeed));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            module.useTilt = EditorGUILayout.Toggle("Movement Tilt", module.useTilt);
-            GUI.enabled = module.useTilt;
-            module.tiltAngle = EditorGUILayout.Slider(module.tiltAngle, 0, 30);
-            GUI.enabled = true;
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            if (module.useTilt)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(margin);
-                module.tiltSpeed = EditorGUILayout.FloatField("Tilt Speed", Mathf.Max(0.01f, module.tiltSpeed));
-                GUILayout.Space(margin);
-                GUILayout.EndHorizontal();
-            }
 
             GUILayout.Space(5);
         }
@@ -157,7 +149,7 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.driftStrength = EditorGUILayout.Slider("Drift Strength", module.driftStrength, 0, 1);
+                module.driftStrength = EditorGUILayout.FloatField("Drift Strength", Mathf.Max(module.driftStrength, 0));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -372,6 +364,8 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
+            GUILayout.Space(5);
+
             if (!module.infinite)
             {
                 GUILayout.BeginHorizontal();
@@ -389,6 +383,14 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
+            module.maxSpeed = EditorGUILayout.FloatField("Max Speed", Mathf.Max(module.maxSpeed, 0));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
             module.control = EditorGUILayout.Slider("Slide Control", module.control, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
@@ -396,6 +398,20 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
             module.height = EditorGUILayout.Slider("Slide Height", module.height, 0, 1);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.tiltAngle = EditorGUILayout.Slider("Tilt Angle", module.tiltAngle, 0, 30);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.tiltSpeed = EditorGUILayout.FloatField("Tilt Speed", Mathf.Max(module.tiltSpeed, 0));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -451,19 +467,29 @@ public class FujinDashModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            GUILayout.Label("Dash Axis");
-            module.axis.y = GUILayout.Toggle(module.axis.y > 0, leftIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
-            module.axis.x = GUILayout.Toggle(module.axis.x > 0, rightIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
-            module.axis.z = GUILayout.Toggle(module.axis.z > 0, upIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
-            module.axis.w = GUILayout.Toggle(module.axis.w > 0, downIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
+            module.canDashInAir = EditorGUILayout.Toggle("Dash in Air", module.canDashInAir);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.canDashInAir = EditorGUILayout.Toggle("Dash in Air", module.canDashInAir);
+            module.omnidirectional = EditorGUILayout.Toggle("Omnidirectional", module.omnidirectional);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            GUILayout.Label("Dash Axis");
+            GUI.enabled = !module.omnidirectional;
+            module.axis.y = GUILayout.Toggle(module.axis.y > 0, leftIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
+            module.axis.x = GUILayout.Toggle(module.axis.x > 0, rightIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
+            module.axis.z = GUILayout.Toggle(module.axis.z > 0, upIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
+            module.axis.w = GUILayout.Toggle(module.axis.w > 0, downIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
+            GUI.enabled = true;
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
@@ -540,6 +566,8 @@ public class FujinPoundModuleDrawer : FujinModuleDrawer
             module.multiplyByHeight = EditorGUILayout.Toggle("Multiply By Height", module.multiplyByHeight);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
@@ -761,15 +789,17 @@ public class FujinWallrunModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.speed = EditorGUILayout.FloatField("Wall Run Speed", Mathf.Max(module.speed, 0));
+            module.minHeight = EditorGUILayout.FloatField("Min Height", Mathf.Max(module.minHeight, 0));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.minHeight = EditorGUILayout.FloatField("Min Height", Mathf.Max(module.minHeight, 0));
+            module.speed = EditorGUILayout.FloatField("Wall Run Speed", Mathf.Max(module.speed, 0));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
@@ -796,68 +826,6 @@ public class FujinWallrunModuleDrawer : FujinModuleDrawer
             GUILayout.Space(margin);
             module.useDuration = EditorGUILayout.Toggle("Wall Run Duration", module.useDuration);
             module.duration = EditorGUILayout.FloatField(Mathf.Max(module.duration, 0));
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(5);
-        }
-
-        GUILayout.EndVertical();
-    }
-}
-
-[CustomPropertyDrawer(typeof(FujinHeadbobModule))]
-public class FujinHeadbobModuleDrawer : FujinModuleDrawer
-{
-    FujinHeadbobModule module;
-
-    public override void Init(SerializedProperty property)
-    {
-        background = FujinEditorUtils.MakeTex(1, 1, backgroundColor);
-        initialized = true;
-        module = property.GetValue<FujinHeadbobModule>();
-    }
-
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-    {
-        if (!initialized)
-            Init(property);
-
-        if (!module.enable)
-            return;
-
-        GUI.DrawTexture(new Rect(position.x, position.y + 5, position.width, 20), background, ScaleMode.StretchToFill, true, 0, Color.white, 0, 3);
-        GUILayout.BeginVertical(EditorStyles.helpBox);
-
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin + 5);
-        module.foldout = EditorGUILayout.Foldout(module.foldout, "Headbob", true, "Label");
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
-        if (module.foldout)
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            module.verticalAmount = EditorGUILayout.Slider("Vertical Amount", module.verticalAmount, 0, 1);
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            module.horizontalAmount = EditorGUILayout.Slider("Horizontal Amount", module.horizontalAmount, 0, 1);
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            module.speedMultiplier = EditorGUILayout.Slider("Speed Multiplier", module.speedMultiplier, 0, 1);
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            module.speedMultiplier = EditorGUILayout.Slider("Speed Multiplier", module.speedMultiplier, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1072,14 +1040,11 @@ public class FujinFreelookModuleDrawer : FujinModuleDrawer
 [CustomPropertyDrawer(typeof(FujinGrappleModule))]
 public class FujinGrappleModuleDrawer : FujinModuleDrawer
 {
-    SerializedProperty prefabProperty;
-
     FujinGrappleModule module;
 
     public override void Init(SerializedProperty property)
     {
         background = FujinEditorUtils.MakeTex(1, 1, backgroundColor);
-        prefabProperty = property.FindPropertyRelative("prefab");
 
         initialized = true;
         module = property.GetValue<FujinGrappleModule>();
@@ -1114,7 +1079,7 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.throwSpeed = EditorGUILayout.FloatField("Grapple Throw Speed", Mathf.Max(0, module.throwSpeed));
+            module.throwSpeed = EditorGUILayout.FloatField("Throw Speed", Mathf.Max(0, module.throwSpeed));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1126,7 +1091,27 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.maxAngle = EditorGUILayout.FloatField("Max Grapple Angle", Mathf.Max(0, module.maxAngle));
+            module.cooldownTime = EditorGUILayout.FloatField("Grapple Cooldown", Mathf.Max(0, module.cooldownTime));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.offset = EditorGUILayout.Vector2Field("Grapple Offset", module.offset, GUILayout.MinWidth(0));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.maxAngle = EditorGUILayout.Slider("Max Angle", module.maxAngle, 0, 180);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.control = EditorGUILayout.Slider("Grapple Control", module.control, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1136,15 +1121,11 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            module.cooldownTime = EditorGUILayout.FloatField("Grapple Cooldown", Mathf.Max(0, module.cooldownTime));
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
+            GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            EditorGUILayout.PropertyField(prefabProperty);
+            module.prefab = (GameObject)EditorGUILayout.ObjectField("Grapple Prefab", module.prefab, typeof(GameObject), false);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1155,20 +1136,17 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
     }
 }
 
-[CustomPropertyDrawer(typeof(FujinSpeedlinesModule))]
-public class FujinSpeedlinesModuleDrawer : FujinModuleDrawer
+[CustomPropertyDrawer(typeof(FujinEffectsModule))]
+public class FujinEffectsModuleDrawer : FujinModuleDrawer
 {
-    SerializedProperty prefabProperty;
-
-    FujinSpeedlinesModule module;
+    FujinEffectsModule module;
 
     public override void Init(SerializedProperty property)
     {
         background = FujinEditorUtils.MakeTex(1, 1, backgroundColor);
-        prefabProperty = property.FindPropertyRelative("prefab");
 
         initialized = true;
-        module = property.GetValue<FujinSpeedlinesModule>();
+        module = property.GetValue<FujinEffectsModule>();
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -1184,7 +1162,7 @@ public class FujinSpeedlinesModuleDrawer : FujinModuleDrawer
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin + 5);
-        module.foldout = EditorGUILayout.Foldout(module.foldout, "Speed Lines", true, "Label"); ;
+        module.foldout = EditorGUILayout.Foldout(module.foldout, "Effects", true, "Label");
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
@@ -1192,21 +1170,293 @@ public class FujinSpeedlinesModuleDrawer : FujinModuleDrawer
         {
             GUILayout.Space(5);
 
+            DrawHeadbob();
+            DrawSway();
+            DrawFOV();
+            DrawSpeedlines();
+
+            GUILayout.Space(5);
+        }
+
+        GUILayout.EndVertical();
+    }
+
+    void DrawHeadbob() 
+    {
+        GUILayout.BeginVertical(EditorStyles.helpBox);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin + 5);
+        module.headbob.enable = EditorGUILayout.Foldout(module.headbob.enable, "Headbob", true, "Toggle");
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        if (module.headbob.enable)
+        {
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.amount = EditorGUILayout.FloatField("Speed Line Amount", Mathf.Max(module.amount, 1));
+            module.headbob.verticalAmount = EditorGUILayout.Slider("Vertical Amount", module.headbob.verticalAmount, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.thiness = EditorGUILayout.Slider("Speed Line Thiness", module.thiness, 0, 1);
+            module.headbob.horizontalAmount = EditorGUILayout.Slider("Horizontal Amount", module.headbob.horizontalAmount, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.radius = EditorGUILayout.Slider("Speed Line Radius", module.radius, 0, 1);
+            module.headbob.speedMultiplier = EditorGUILayout.Slider("Speed Multiplier", module.headbob.speedMultiplier, 0, 1);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+        }
+
+        GUILayout.EndVertical();
+    }
+
+    void DrawSway() 
+    {
+        GUILayout.BeginVertical(EditorStyles.helpBox);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin + 5);
+        module.sway.enable = EditorGUILayout.Foldout(module.sway.enable, "Sway", true, "Toggle");
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        if (module.sway.enable)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.sway.container = (Transform)EditorGUILayout.ObjectField("Sway Container", module.sway.container, typeof(Transform), false);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin + 5);
+            module.sway.idleFoldout = EditorGUILayout.Foldout(module.sway.idleFoldout, "Idle Sway", true);
+            GUILayout.Space(margin + 5);
+            GUILayout.EndHorizontal();
+
+            if (module.sway.idleFoldout)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.Slider("Tilt", 0, 0, 45);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.Vector2Field("Offset", new Vector2());
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Transition Speed", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(5);
+            }
+            GUILayout.EndVertical();
+            
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin + 5);
+            module.sway.lookFoldout = EditorGUILayout.Foldout(module.sway.lookFoldout, "Look Sway", true);
+            GUILayout.Space(margin + 5);
+            GUILayout.EndHorizontal();
+
+            if (module.sway.lookFoldout)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.Slider("Tilt", 0, 0, 45);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Offset", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Transition Speed", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(5);
+            }
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin + 5);
+            module.sway.moveFoldout = EditorGUILayout.Foldout(module.sway.moveFoldout, "Movement Sway", true);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            if (module.sway.moveFoldout)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.Slider("Tilt", 0, 0, 45);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Offset", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Transition Speed", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(5);
+            }
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin + 5);
+            module.sway.fallFoldout = EditorGUILayout.Foldout(module.sway.fallFoldout, "Fall Sway", true);
+            GUILayout.Space(margin + 5);
+            GUILayout.EndHorizontal();
+
+            if (module.sway.fallFoldout)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.Slider("Tilt", 0, 0, 45);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Offset", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Transition Speed", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(5);
+            }
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin + 5);
+            module.sway.impactFoldout = EditorGUILayout.Foldout(module.sway.impactFoldout, "Impact Sway", true);
+            GUILayout.Space(margin + 5);
+            GUILayout.EndHorizontal();
+
+            if (module.sway.impactFoldout)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.Slider("Tilt", 0, 0, 45);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Offset", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin + 5);
+                EditorGUILayout.FloatField("Transition Speed", 0);
+                GUILayout.Space(margin + 5);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(5);
+            }
+            GUILayout.EndVertical();
+        }
+
+        GUILayout.EndVertical();
+    }
+
+    void DrawFOV() 
+    {
+        GUILayout.BeginVertical(EditorStyles.helpBox);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin + 5);
+        module.fov.enable = EditorGUILayout.Foldout(module.fov.enable, "FOV", true, "Toggle");
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        if (module.fov.enable)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.fov.multiplier = EditorGUILayout.Slider("FOV Multiplier", module.fov.multiplier, 1, 2);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.fov.speed = EditorGUILayout.FloatField("Transition Speed", Mathf.Max(module.fov.speed, 0));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.fov.minVelocity = EditorGUILayout.FloatField("Min, Max Velocity", Mathf.Max(module.fov.minVelocity, 0));
+            module.fov.maxVelocity = EditorGUILayout.FloatField(Mathf.Max(module.fov.maxVelocity, 0), GUILayout.MinWidth(0));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+        }
+
+        GUILayout.EndVertical();
+    }
+
+    void DrawSpeedlines() 
+    {
+        GUILayout.BeginVertical(EditorStyles.helpBox);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin + 5);
+        module.speedlines.enable = EditorGUILayout.Foldout(module.speedlines.enable, "Speedlines", true, "Toggle");
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        if (module.speedlines.enable)
+        {
+            GUILayout.Space(5);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.speedlines.amount = EditorGUILayout.FloatField("Speed Line Amount", Mathf.Max(module.speedlines.amount, 1));
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.speedlines.thiness = EditorGUILayout.Slider("Speed Line Thiness", module.speedlines.thiness, 0, 1);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.speedlines.radius = EditorGUILayout.Slider("Speed Line Radius", module.speedlines.radius, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1214,14 +1464,14 @@ public class FujinSpeedlinesModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.curve = EditorGUILayout.Slider("Multiplier Curve", module.curve, 0, 1);
+            module.speedlines.curve = EditorGUILayout.Slider("Multiplier Curve", module.speedlines.curve, 0, 1);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.minVelocity = EditorGUILayout.FloatField("Min, Max Velocity", Mathf.Max(module.minVelocity, 0));
-            module.maxVelocity = EditorGUILayout.FloatField(Mathf.Max(module.maxVelocity, 0));
+            module.speedlines.minVelocity = EditorGUILayout.FloatField("Min, Max Velocity", Mathf.Max(module.speedlines.minVelocity, 0));
+            module.speedlines.maxVelocity = EditorGUILayout.FloatField(Mathf.Max(module.speedlines.maxVelocity, 0), GUILayout.MinWidth(0));
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1229,13 +1479,13 @@ public class FujinSpeedlinesModuleDrawer : FujinModuleDrawer
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            module.gradient = EditorGUILayout.GradientField("Color", module.gradient);
+            module.speedlines.gradient = EditorGUILayout.GradientField("Color", module.speedlines.gradient);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
-            EditorGUILayout.PropertyField(prefabProperty);
+            module.speedlines.prefab = (GameObject)EditorGUILayout.ObjectField("Speedlines Prefab", module.speedlines.prefab, typeof(GameObject), false);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -1249,11 +1499,14 @@ public class FujinSpeedlinesModuleDrawer : FujinModuleDrawer
 [CustomPropertyDrawer(typeof(FujinPhysicsModule))]
 public class FujinPhysicsModuleDrawer : FujinModuleDrawer
 {
+    Material mat;
     SerializedProperty materialProperty;
     FujinPhysicsModule module;
 
     public override void Init(SerializedProperty property)
     {
+        var shader = Shader.Find("Hidden/Internal-Colored");
+        mat = new Material(shader);
         materialProperty = property.FindPropertyRelative("physicMaterial");
 
         initialized = true;
@@ -1355,15 +1608,124 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
+        module.slopeForce = EditorGUILayout.FloatField("Slope Force", Mathf.Max(module.slopeForce, 0));
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
         module.slopeAngle = EditorGUILayout.Slider("Max Slope Angle", module.slopeAngle, 0, 90);
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
-        module.slopeForce = EditorGUILayout.FloatField("Downward Slope Force", Mathf.Max(module.slopeForce, 0));
+        module.slopeFallOff = EditorGUILayout.Slider("Slope Fall Off", module.slopeFallOff, 0, 1);
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
+
+        GUILayout.Space(5);
+
+        #region Falloff Graph
+
+        // Reserve GUI space with a width from 10 to 10000, and a fixed height of 200, and 
+        // cache it as a rectangle.
+        Rect layoutRectangle = GUILayoutUtility.GetRect(100, 100, 15, 15);
+        float width = layoutRectangle.width - margin;
+
+        if (Event.current.type == EventType.Repaint)
+        {
+
+            // If we are currently in the Repaint event, begin to draw a clip of the size of 
+            // previously reserved rectangle, and push the current matrix for drawing.
+            GUI.BeginClip(layoutRectangle);
+            GL.PushMatrix();
+
+            // Clear the current render buffer, setting a new background colour, and set our
+            // material for rendering.
+            GL.Clear(true, false, new Color(1, 1, 1, 0.1f));
+            mat.SetPass(0);
+
+            // Draw background
+            GL.Begin(GL.QUADS);
+            GL.Color(new Color(1, 1, 1, 0.1f));
+            GL.Vertex3(margin, 0, 0);
+            GL.Vertex3(width, 0, 0);
+            GL.Vertex3(width, layoutRectangle.height, 0);
+            GL.Vertex3(margin, layoutRectangle.height, 0);
+            GL.End();
+
+            // Draw Lines
+            GL.Begin(GL.LINES);
+
+            float x = margin;
+            float increment = (width - margin) / 18;
+
+            for (int i = 0; i <= 90; i++)
+            {
+                if (i % 5 != 0)
+                    continue;
+
+                Color lineColor = (i % 15 == 0) ?
+                    new Color(1, 1, 1, .3f) : new Color(1, 1, 1, .1f);
+
+                GL.Color(lineColor);
+                GL.Vertex3(x, 0, 0);
+                GL.Vertex3(x, layoutRectangle.height, 0);
+                x += increment;
+            }
+
+            GL.End();
+
+            // Draw Gradient
+            GL.Begin(GL.QUADS);
+
+            increment = width / 90;
+            float diff = module.slopeAngle * module.slopeFallOff;
+            float fallOff = module.slopeAngle - diff;
+
+            GL.Color(new Color(0, 1, 0, 0.3f));
+            GL.Vertex3(increment * fallOff, 0, 0);
+            GL.Color(new Color(1, 1, 0, 0.3f));
+            GL.Vertex3(increment * (fallOff + diff / 2) , 0, 0);
+            GL.Vertex3(increment * (fallOff + diff / 2), layoutRectangle.height, 0);
+            GL.Color(new Color(0, 1, 0, 0.3f));
+            GL.Vertex3(increment * fallOff, layoutRectangle.height, 0);
+
+            GL.Color(new Color(1, 1, 0, 0.3f));
+            GL.Vertex3(increment * (fallOff + diff / 2), 0, 0);
+            GL.Color(new Color(1, 0, 0, 0.3f));
+            GL.Vertex3(increment * module.slopeAngle, 0, 0);
+            GL.Vertex3(increment * module.slopeAngle, layoutRectangle.height, 0);
+            GL.Color(new Color(1, 1, 0, 0.3f));
+            GL.Vertex3(increment * (fallOff + diff / 2), layoutRectangle.height, 0);
+
+            GL.Color(new Color(1, 0, 0, 0.3f));
+            GL.Vertex3(increment * Mathf.Min(module.slopeAngle, 89), 0, 0);
+            GL.Vertex3(width, 0, 0);
+            GL.Vertex3(width, layoutRectangle.height, 0);
+            GL.Vertex3(increment * Mathf.Min(module.slopeAngle, 89), layoutRectangle.height, 0);
+
+            GL.End();
+
+            // Draw data
+
+            // Pop the current matrix for rendering, and end the drawing clip.
+            GL.PopMatrix();
+            GUI.EndClip();
+        }
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        GUILayout.Label("0");
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("45");
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("90");
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        #endregion Falloff Graph
 
         GUILayout.Space(5);
         GUILayout.EndVertical();
@@ -1407,6 +1769,12 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         EditorGUILayout.Popup("Walls", 0, new string[] { });
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        EditorGUILayout.Popup("Interact", 0, new string[] { });
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 

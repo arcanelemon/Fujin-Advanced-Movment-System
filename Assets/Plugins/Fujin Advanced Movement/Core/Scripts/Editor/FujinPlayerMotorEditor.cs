@@ -17,6 +17,8 @@ public class FujinPlayerMotorEditor : Editor
     float updateRate = 100;
     bool initialized;
 
+    Vector2[] recordedVelocities = new Vector2[60];
+
     Material mat;
     FujinPlayerMotor motor;
     FujinInputModule inputModule;
@@ -30,13 +32,12 @@ public class FujinPlayerMotorEditor : Editor
     FujinMantleModule mantleModule;
     FujinClimbModule climbModule;
     FujinWallrunModule wallrunModule;
-    FujinHeadbobModule headbobModule;
     FujinAutorunModule autorunModule;
     FujinSlowwalkModule slowwalkModule;
     FujinLeanModule leanModule;
     FujinFreelookModule freelookModule;
     FujinGrappleModule grappleModule;
-    FujinSpeedlinesModule speedlinesModule;
+    FujinEffectsModule effectsModule;
 
     SerializedProperty inputProperty;
     SerializedProperty physicsProperty;
@@ -51,13 +52,12 @@ public class FujinPlayerMotorEditor : Editor
     SerializedProperty mantleProperty;
     SerializedProperty climbProperty;
     SerializedProperty wallrunProperty;
-    SerializedProperty headbobProperty;
     SerializedProperty autorunProperty;
     SerializedProperty slowwalkProperty;
     SerializedProperty leanProperty;
     SerializedProperty freelookProperty;
     SerializedProperty grappleProperty;
-    SerializedProperty speedlineProperty;
+    SerializedProperty effectsProperty;
 
     GUIStyle foldout;
     Texture2D backgroundTexture;
@@ -88,13 +88,12 @@ public class FujinPlayerMotorEditor : Editor
         mantleProperty = serializedObject.FindProperty("mantle");
         climbProperty = serializedObject.FindProperty("climb");
         wallrunProperty = serializedObject.FindProperty("wallrun");
-        headbobProperty = serializedObject.FindProperty("headbob");
         autorunProperty = serializedObject.FindProperty("autorun");
         slowwalkProperty = serializedObject.FindProperty("slowwalk");
         leanProperty = serializedObject.FindProperty("lean");
         freelookProperty = serializedObject.FindProperty("freelook");
         grappleProperty = serializedObject.FindProperty("grapple");
-        speedlineProperty = serializedObject.FindProperty("speedlines");
+        effectsProperty = serializedObject.FindProperty("effects");
 
         inputModule = inputProperty.GetValue<FujinInputModule>();
         physicModule = physicsProperty.GetValue<FujinPhysicsModule>();
@@ -107,13 +106,12 @@ public class FujinPlayerMotorEditor : Editor
         mantleModule = mantleProperty.GetValue<FujinMantleModule>();
         climbModule = climbProperty.GetValue<FujinClimbModule>();
         wallrunModule = wallrunProperty.GetValue<FujinWallrunModule>();
-        headbobModule = headbobProperty.GetValue<FujinHeadbobModule>();
         autorunModule = autorunProperty.GetValue<FujinAutorunModule>();
         slowwalkModule = slowwalkProperty.GetValue<FujinSlowwalkModule>();
         leanModule = leanProperty.GetValue<FujinLeanModule>();
         freelookModule = freelookProperty.GetValue<FujinFreelookModule>();
         grappleModule = grappleProperty.GetValue<FujinGrappleModule>();
-        speedlinesModule = speedlineProperty.GetValue<FujinSpeedlinesModule>();
+        effectsModule = effectsProperty.GetValue<FujinEffectsModule>();
 
         var shader = Shader.Find("Hidden/Internal-Colored");
         mat = new Material(shader);
@@ -149,7 +147,7 @@ public class FujinPlayerMotorEditor : Editor
         if (FoldoutButton("Input", ref motor.inputFoldout)) 
             DrawInput();
 
-        if (FoldoutButton("Config", ref motor.configFoldout))
+        if (FoldoutButton("Settings", ref motor.configFoldout))
             DrawSettings();
 
         if (EditorGUI.EndChangeCheck())
@@ -164,23 +162,6 @@ public class FujinPlayerMotorEditor : Editor
     #endregion Engine
 
     #region Private Methods
-
-    /// <summary>
-    /// OnUpdate
-    /// Repaints the editor window at a constant rate.
-    /// </summary>
-    void OnUpdate()
-    {
-        count++;
-        if (count < updateRate)
-            return;
-
-        count = 0;
-        if (Application.isPlaying && motor.debugFoldout)
-        {
-            Repaint();
-        }
-    }
 
     /// <summary>
     /// FoldoutButton
@@ -211,7 +192,6 @@ public class FujinPlayerMotorEditor : Editor
     void Init()
     {
         motor = (FujinPlayerMotor)target;
-        EditorApplication.update += OnUpdate;
         initialized = true;
 
         foldout = new GUIStyle("Button");
@@ -369,12 +349,14 @@ public class FujinPlayerMotorEditor : Editor
         GUILayout.BeginVertical(EditorStyles.helpBox);
         GUILayout.Space(5);
 
+        #region Foldout 1
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         GUILayout.BeginVertical(EditorStyles.helpBox);
         GUILayout.BeginHorizontal();
         bool none = !jumpModule.enable && !sprintModule.enable && !crouchModule.enable && !dashModule.enable && !slideModule.enable
-            && !poundModule.enable && !mantleModule.enable && !climbModule.enable && !wallrunModule.enable;
+            && !poundModule.enable && !mantleModule.enable && !climbModule.enable && !wallrunModule.enable && !autorunModule.enable
+            && !slowwalkModule.enable && !leanModule.enable && !freelookModule.enable && !grappleModule.enable && !effectsModule.enable;
         if (none)
             GUI.contentColor = Color.red;
         if (GUILayout.Toggle(none, "None", "Button"))
@@ -388,13 +370,20 @@ public class FujinPlayerMotorEditor : Editor
            poundModule.enable = false;
            mantleModule.enable = false;
            climbModule.enable = false;
-           wallrunModule.enable = false;
+           wallrunModule.enable = false; 
+           autorunModule.enable = false;
+           slowwalkModule.enable = false;
+           leanModule.enable = false;
+           freelookModule.enable = false;
+           grappleModule.enable = false;
+           effectsModule.enable = false;
         }
 
         GUI.contentColor = Color.white;
 
         bool all = jumpModule.enable && sprintModule.enable && crouchModule.enable && dashModule.enable && slideModule.enable
-            && poundModule.enable && mantleModule.enable && climbModule.enable && wallrunModule.enable;
+            && poundModule.enable && mantleModule.enable && climbModule.enable && wallrunModule.enable && autorunModule.enable
+            && slowwalkModule.enable && leanModule.enable && freelookModule.enable && grappleModule.enable && effectsModule.enable;
         if (all)
             GUI.contentColor = Color.green;
         if (GUILayout.Toggle(all, "All", "Button"))
@@ -409,6 +398,12 @@ public class FujinPlayerMotorEditor : Editor
             mantleModule.enable = true;
             climbModule.enable = true;
             wallrunModule.enable = true;
+            autorunModule.enable = true;
+            slowwalkModule.enable = true;
+            leanModule.enable = true;
+            freelookModule.enable = true;
+            grappleModule.enable = true;
+            effectsModule.enable = true;
         }
         GUILayout.EndHorizontal();
 
@@ -490,6 +485,7 @@ public class FujinPlayerMotorEditor : Editor
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
         GUILayout.Space(5);
+        #endregion Foldout 1
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(2*margin);
@@ -498,17 +494,10 @@ public class FujinPlayerMotorEditor : Editor
 
         if (motor.morefeaturesFoldout)
         {
+            #region Foldout 2
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
             GUILayout.BeginVertical(EditorStyles.helpBox);
-            GUILayout.BeginHorizontal();
-            if (headbobModule.enable)
-                GUI.contentColor = Color.green;
-            else
-                GUI.contentColor = Color.white;
-            headbobModule.enable = GUILayout.Toggle(headbobModule.enable, "Headbob", "Button");
-            GUILayout.EndHorizontal();
-
             GUILayout.BeginHorizontal();
             if (autorunModule.enable)
                 GUI.contentColor = Color.green;
@@ -550,17 +539,18 @@ public class FujinPlayerMotorEditor : Editor
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (speedlinesModule.enable)
+            if (effectsModule.enable)
                 GUI.contentColor = Color.green;
             else
                 GUI.contentColor = Color.white;
-            speedlinesModule.enable = GUILayout.Toggle(speedlinesModule.enable, "Speed Lines", "Button");
+            effectsModule.enable = GUILayout.Toggle(effectsModule.enable, "Effects", "Button");
             GUILayout.EndHorizontal();
 
             GUI.contentColor = Color.white;
             GUILayout.EndVertical();
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
+            #endregion Foldout 2
         }
 
         GUILayout.Space(5);
@@ -598,8 +588,6 @@ public class FujinPlayerMotorEditor : Editor
     void DrawModules()
     {
         EditorGUILayout.PropertyField(movementProperty);
-        if (headbobModule.enable)
-            EditorGUILayout.PropertyField(headbobProperty); 
         if (jumpModule.enable)
             EditorGUILayout.PropertyField(jumpProperty);
         if (sprintModule.enable)
@@ -626,8 +614,8 @@ public class FujinPlayerMotorEditor : Editor
             EditorGUILayout.PropertyField(freelookProperty);
         if (grappleModule.enable)
             EditorGUILayout.PropertyField(grappleProperty);
-        if (speedlinesModule.enable)
-            EditorGUILayout.PropertyField(speedlineProperty);
+        if (effectsModule.enable)
+            EditorGUILayout.PropertyField(effectsProperty);
     }
 
     /// <summary>
@@ -650,12 +638,6 @@ public class FujinPlayerMotorEditor : Editor
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         motor.hideMouseOnAwake = EditorGUILayout.Toggle("Hide Mouse On Awake", motor.hideMouseOnAwake);
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin);
-        EditorGUILayout.Toggle("Control FOV", true);
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
@@ -726,9 +708,7 @@ public class FujinPlayerMotorEditor : Editor
             GL.Clear(true, false, new Color(.33f, .33f, .33f));
             mat.SetPass(0);
 
-            // Start drawing in OpenGL Quads, to draw the background canvas. Set the
-            // colour black as the current OpenGL drawing colour, and draw a quad covering
-            // the dimensions of the layoutRectangle.
+            #region Draw Background
             GL.Begin(GL.QUADS);
             GL.Color(new Color(.33f, .33f, .33f));
             GL.Vertex3(margin, 0, 0);
@@ -736,62 +716,84 @@ public class FujinPlayerMotorEditor : Editor
             GL.Vertex3(width, layoutRectangle.height, 0);
             GL.Vertex3(margin, layoutRectangle.height, 0);
             GL.End();
+            #endregion Draw Background
 
-            // Start drawing in OpenGL Lines, to draw the lines of the grid.
+            #region Draw Lines
+            // Draw Lines
             GL.Begin(GL.LINES);
 
-            // Store measurement values to determine the offset, for scrolling animation,
-            // and the line count, for drawing the grid.
-            int offset = Time.frameCount % 25;
-            int count = (int)(width / 10) + 20;
+            float x = margin;
+            float increment = (width - margin) / 60;
 
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i <= 60; i++)
             {
-                // For every line being drawn in the grid, create a colour placeholder; if the
-                // current index is divisible by 5, we are at a major segment line; set this
-                // colour to a dark grey. If the current index is not divisible by 5, we are
-                // at a minor segment line; set this colour to a lighter grey. Set the derived
-                // colour as the current OpenGL drawing colour.
-                Color lineColour = (i % 5 == 0
-                    ? new Color(.1f, .1f, .1f) : new Color(.2f, .2f, .2f));
-                GL.Color(lineColour);
+                Color lineColor = (i % 10 == 0) ?
+                    new Color(0, 0, 0, 1) : new Color(0, 0, 0, .3f);
 
-                // Derive a new x co-ordinate from the initial index, converting it straight
-                // into line positions, and move it back to adjust for the animation offset.
-                float x = i * 10 - offset + margin;
-
-                if (x >= margin && x < width)
-                {
-                    // If the current derived x position is within the bounds of the
-                    // rectangle, draw another vertical line.
-                    GL.Vertex3(x, 0, 0);
-                    GL.Vertex3(x, layoutRectangle.height, 0);
-                }
-
-                if (i < layoutRectangle.height / 10)
-                {
-                    // Convert the current index value into a y position, and if it is within
-                    // the bounds of the rectangle, draw another horizontal line.
-                    GL.Vertex3(margin, i * 10, 0);
-                    GL.Vertex3(width, i * 10, 0);
-                }
+                GL.Color(lineColor);
+                GL.Vertex3(x, 0, 0);
+                GL.Vertex3(x, layoutRectangle.height, 0);
+                x += increment;
             }
 
-            // End lines drawing.
+            float y = 0;
+            increment = 10;
 
+            for (int i = 0; i < 10; i++)
+            {
+                Color lineColor = (i % 5 == 0) ?
+                       new Color(0, 0, 0, 1) : new Color(0, 0, 0, .3f);
+                GL.Color(lineColor);
+                GL.Vertex3(margin, y, 0);
+                GL.Vertex3(width, y, 0);
+                y += increment;
+            }
+
+            GL.End();
+            #endregion Draw Lines
+
+            #region Draw Data
             // Draw data
-            GL.End();
-            GL.Begin(GL.LINE_STRIP);
-            for (int i = 0; i < 1; i++)
+            if (EditorApplication.isPlaying && !EditorApplication.isPaused)
             {
-                GL.Color(Color.cyan);
-                GL.Vertex3(i * 2, Mathf.Abs(motor.Velocity.x), 0);
-                GL.Color(Color.green);
-                GL.Vertex3(i * 2, Mathf.Abs(motor.Velocity.y), 0);
-                GL.Color(Color.magenta);
-                GL.Vertex3(i * 2, Mathf.Abs(motor.Velocity.z), 0);
+                float horiztontalMag = Mathf.Min(new Vector2(motor.Velocity.x, motor.Velocity.z).magnitude, 50);
+                float verticalMag = Mathf.Clamp(motor.Velocity.y, -50, 50);
+                Vector2 velocity = new Vector2(horiztontalMag, verticalMag);
+                for (int i = 59; i >= 0; i--)
+                {
+                    // shift data
+                    if (i == 0)
+                        recordedVelocities[i] = velocity;
+                    else
+                        recordedVelocities[i] = recordedVelocities[i - 1];
+                }
+            }
+
+            x = width;
+            y = layoutRectangle.height / 2;
+            increment = (width - margin) / 60;
+
+            GL.Begin(GL.LINE_STRIP); 
+            GL.Color(Color.magenta);
+            for (int i = 0; i < 60; i++) 
+            {
+                GL.Vertex3(x, y - recordedVelocities[i].x, 0);
+                GL.Vertex3(x - increment, y - recordedVelocities[i == 59 ? i : i + 1].x, 0);
+                x -= increment;
             }
             GL.End();
+
+            x = width;
+            GL.Begin(GL.LINE_STRIP);
+            GL.Color(Color.green);
+            for (int i = 0; i < 60; i++) 
+            {
+                GL.Vertex3(x, y - recordedVelocities[i].y, 0);
+                GL.Vertex3(x - increment, y - recordedVelocities[i == 59 ? i : i + 1].y, 0);
+                x -= increment;
+            }
+            GL.End();
+            #endregion Draw Data
 
             // Pop the current matrix for rendering, and end the drawing clip.
             GL.PopMatrix();
@@ -805,14 +807,14 @@ public class FujinPlayerMotorEditor : Editor
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         GUILayout.Label("Velocity");
-        EditorGUILayout.Vector3Field("", motor.Velocity);
+        EditorGUILayout.Vector3Field("", motor.Velocity, GUILayout.MinWidth(0));
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         GUILayout.Label("Position");
-        EditorGUILayout.Vector3Field("", motor.Position);
+        EditorGUILayout.Vector3Field("", motor.Position, GUILayout.MinWidth(0));
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
@@ -857,9 +859,11 @@ public class FujinPlayerMotorEditor : Editor
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
-        EditorGUILayout.FloatField("Speed", motor.Speed);
+        EditorGUILayout.FloatField("Target Speed", motor.Speed);
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
+
+        GUILayout.Space(5);
 
         if (jumpModule.enable && jumpModule.enableDoubleJumps && !motor.Grounded) 
         {
