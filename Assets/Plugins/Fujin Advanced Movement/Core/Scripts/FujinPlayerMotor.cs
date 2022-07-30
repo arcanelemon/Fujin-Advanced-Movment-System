@@ -109,17 +109,8 @@ namespace Fujin
         bool cueStand;
         bool headspaceAvailable;
         bool controlHeight = true;
-        bool canJump = true;
-        bool jumpDrift = false;
-        bool canPound = true;
-        bool canGrapple = true;
-        bool returnGrapple;
-        bool grappleInitiated;
 
         float d;
-        float yRot;
-        float xRot;
-        float lookResistance;
         float currSpeed;
         float normalAngle;
         float groundCheckRadius = 0.49f;
@@ -132,33 +123,19 @@ namespace Fujin
         float heightSmoothing = 5;
         float defaultFOV;
         float tiltRotation;
-        float poundHeight;
         float leanDirection;
         bool previousWallCheck;
 
-        // float
-        float slideSpeed;
-
         // counters
-        int numJumps;
-        int numDashes;
 
-        Vector2 lookInputs;
-        Vector2 moveInputs;
-        Vector2 lookOffset;
         Vector2 cameraOffset;
         Vector3 normal;
         Vector3 previousVelocity;
         Vector3 previousPosition;
-        Vector3 dashDirection;
-        Vector3 poundOrigin;
-        Vector3 grappleDirection;
 
         LayerMask collisionExclusionMask;
         Collider lastClimbCollider;
         ParticleSystem.EmissionModule speedLinesEmission;
-        GameObject grappleObj;
-        LineRenderer grapplelineRenderer;
         CapsuleCollider col;
         Camera cam;
         Rigidbody rb;
@@ -887,6 +864,13 @@ namespace Fujin
 
         #region Look
 
+        float yRot;
+        float xRot;
+        float lookResistance;
+
+        Vector2 lookInputs;
+        Vector2 lookOffset;
+
         /// <summary>
         /// Look
         /// Rotates <code>cameraContainer</code> from mouseDelta.
@@ -930,6 +914,7 @@ namespace Fujin
         #endregion Look
 
         #region Move
+        Vector2 moveInputs;
 
         /// <summary>
         /// Move
@@ -999,6 +984,10 @@ namespace Fujin
         #endregion Move
 
         #region Jump
+        bool canJump = true;
+        bool jumpDrift = false;
+
+        int numJumps;
 
         /// <summary>
         /// Jump
@@ -1129,6 +1118,9 @@ namespace Fujin
 
         #region Slide
 
+        float slideSpeed;
+        Vector3 slideDirection;
+
         /// <summary>
         /// StartSlide
         /// Sets <code>movementState</code> to <code>MovementState.Sliding</code> and associated variables.
@@ -1147,7 +1139,8 @@ namespace Fujin
                     direction = newDirection;
             }
 
-            rb.AddForce(Vector3.ProjectOnPlane(direction, normal) * slideForce, ForceMode.Impulse);
+            slideDirection = Vector3.ProjectOnPlane(direction, normal).normalized;
+            rb.AddForce(slideDirection * slideForce, ForceMode.Impulse);
             movementState = MovementState.Sliding;
         }
 
@@ -1165,7 +1158,7 @@ namespace Fujin
 
             // slide control
             slideSpeed = Mathf.Lerp(slideSpeed, moveInputs.x, slide.control * d);
-            Vector3 direction = rb.velocity.normalized + transform.right * slideSpeed;
+            Vector3 direction = slideDirection + transform.right * slideSpeed;
             rb.velocity = direction.normalized * rb.velocity.magnitude;
 
             // Slide friction
@@ -1173,8 +1166,11 @@ namespace Fujin
             rb.velocity += friction;
 
             // Slide down slopes 
-            if (normalAngle > 0) // SLIDE PROBLEM HERE
+            if (normalAngle > 0)
+            {
+                slideDirection = Vector3.ProjectOnPlane(direction, normal).normalized;
                 ProjectDownSlope(Mathf.Min(normalAngle / physics.slopeAngle, 1) * physics.slopeForce);
+            }
 
             // If force is decellarating and less than threshold, stop
             if ((Mathf.Abs(previousVelocity.x) > Mathf.Abs(rb.velocity.x) && Mathf.Abs(previousVelocity.z) > Mathf.Abs(rb.velocity.z))
@@ -1190,6 +1186,9 @@ namespace Fujin
         #endregion Slide
 
         #region Dash
+
+        int numDashes;
+        Vector3 dashDirection;
 
         /// <summary>
         /// StartDash
@@ -1249,6 +1248,10 @@ namespace Fujin
         #endregion Dash
 
         #region Pound
+
+        bool canPound = true;
+        float poundHeight;
+        Vector3 poundOrigin;
 
         /// <summary>
         /// StartPound
@@ -1441,6 +1444,16 @@ namespace Fujin
         #endregion Lean
 
         #region Grapple
+
+        bool canGrapple = true;
+        bool returnGrapple;
+        bool grappleInitiated;
+
+        Vector3 grappleDirection;
+
+        GameObject grappleObj;
+        LineRenderer grapplelineRenderer;
+
         /// <summary>
         /// StartGrapple
         /// Sets <code>movementState</code> to <code>MovementState.ThrowinGrapple</code> and inits state. This includes spawning and initializing the grapple object.
