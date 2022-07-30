@@ -890,7 +890,7 @@ public class FujinPlayerMotorEditor : Editor
 
                 GUILayout.Space(5);
 
-                if (jumpModule.enable && jumpModule.enableDoubleJumps && !motor.Grounded)
+                if (jumpModule.enable && jumpModule.doubleJump.enable && !motor.Grounded)
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);

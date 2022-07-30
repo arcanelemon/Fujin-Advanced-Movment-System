@@ -26,25 +26,41 @@ namespace Fujin
     [System.Serializable]
     public class FujinJumpModule : FujinMotorModule
     {
-        public int doubleJumpCount;
         public float force;
         public float gracePeriod;
-        public float doubleJumpforce;
-        public bool enableDoubleJumps;
-        public float wallJumpforce;
-        public bool enableWallJump;
-        public float driftPeriod;
-        public float driftStrength;
-        public float driftRedirect;
-        public bool enableDrift;
+        public DoubleJump doubleJump = new DoubleJump();
+        public JumpDrift jumpDrift = new JumpDrift();
+        public WallJump wallJump = new WallJump();
 
-        public bool driftFoldout;
-        public bool doubleJumpFoldout;
-        public bool wallFoldout;
+        [System.Serializable]
+        public class DoubleJump
+        {
+            public bool enable;
+            public bool foldout;
+            public float fadeAmount;
+            public int amount;
+            public float force;
+        }
 
-        public float doubleJumpFadeAmount;
-        public float driftFadeAmount;
-        public float wallFadeAmount;
+        [System.Serializable]
+        public class JumpDrift
+        {
+            public bool enable;
+            public bool foldout;
+            public float fadeAmount;
+            public float period;
+            public float strength;
+            public float redirect;
+        }
+
+        [System.Serializable]
+        public class WallJump
+        {
+            public bool enable;
+            public bool foldout;
+            public float fadeAmount;
+            public float force;
+        }
     }
 
     [System.Serializable]
@@ -87,7 +103,18 @@ namespace Fujin
         public float cooldownTime;
         public bool canDashInAir;
         public bool omnidirectional;
+        public SlowTime slowTime;
         public Vector4 axis;
+
+        [System.Serializable]
+        public class SlowTime
+        {
+            public bool enable;
+            public bool foldout;
+            public float fadeAmount;
+            public float timeMultiplier;
+            public float transistionSpeed;
+        }
     }
 
     [System.Serializable]
