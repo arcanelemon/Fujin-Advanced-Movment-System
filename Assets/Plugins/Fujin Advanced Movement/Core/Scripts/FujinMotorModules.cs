@@ -73,6 +73,7 @@ namespace Fujin
         public float tiltSpeed;
         public float control;
         public bool infinite;
+        public bool multidirectional;
         public bool hold;
     }
 
@@ -174,11 +175,13 @@ namespace Fujin
         public float range;
         public float throwSpeed;
         public float speed;
+        public float acceleration;
         public float maxAngle;
         public float control;
         public float lookResistance;
         public float cooldownTime;
-        public Vector3 offset;
+        public bool resetMomentum;
+        public Transform pivot;
         public GameObject prefab;
     }
 

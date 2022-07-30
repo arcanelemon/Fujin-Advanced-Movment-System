@@ -679,6 +679,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1994482477}
+  - {fileID: 1794190846}
   m_Father: {fileID: 2146155539}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -909,6 +910,36 @@ Transform:
   m_Father: {fileID: 1918147196}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1794190845
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1794190846}
+  m_Layer: 6
+  m_Name: Grapple Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1794190846
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794190845}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1012608230}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1918147191
 GameObject:
   m_ObjectHideFlags: 0
@@ -976,16 +1007,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f9d8d3f17eb04d4cb6c11aa8226522e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputFadeAmount: 0
+  inputFadeAmount: 1
   featuresFadeAmount: 0
   morefeaturesFadeAmount: 0
-  settingsFadeAmount: 1
+  settingsFadeAmount: 0
   debugFadeAmount: 1
   tab: 0
-  inputFoldout: 0
+  inputFoldout: 1
   featuresFoldout: 0
   morefeaturesFoldout: 0
-  settingsFoldout: 1
+  settingsFoldout: 0
   debugFoldout: 1
   hideMouseOnAwake: 1
   drawGizmos: 1
@@ -1068,8 +1099,8 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings:
       - m_Name: 
-        m_Id: 2708382c-a066-4e1d-962b-a2fac10e15b9
-        m_Path: <Keyboard>/space
+        m_Id: 5fded2a3-5498-45e8-882e-ac9608a49f05
+        m_Path: <Mouse>/scroll/y
         m_Interactions: 
         m_Processors: 
         m_Groups: 
@@ -1259,9 +1290,9 @@ MonoBehaviour:
     turnRateFromVelocity: 0
     stepHeight: 1
     stepDepth: 0
-    slopeAngle: 50
+    slopeAngle: 90
     slopeForce: 10
-    slopeFallOff: 0.38
+    slopeFallOff: 0.34
     wallStick: 0
     useWallStickDuration: 0
     wallStickDuration: 0
@@ -1286,18 +1317,18 @@ MonoBehaviour:
     force: 8
     gracePeriod: 0.1
     doubleJumpforce: 12
-    enableDoubleJumps: 1
+    enableDoubleJumps: 0
     wallJumpforce: 0
     enableWallJump: 0
     driftPeriod: 0.5
     driftStrength: 5
     driftRedirect: 0.1
-    enableDrift: 1
-    driftFoldout: 0
+    enableDrift: 0
+    driftFoldout: 1
     doubleJumpFoldout: 0
     wallFoldout: 0
     doubleJumpFadeAmount: 0
-    driftFadeAmount: 0
+    driftFadeAmount: 1
     wallFadeAmount: 0
   sprint:
     enable: 1
@@ -1320,7 +1351,7 @@ MonoBehaviour:
     force: 10
     friction: 0.2
     maxSpeed: 25
-    tiltAngle: 5
+    tiltAngle: 30
     tiltSpeed: 1
     control: 1
     infinite: 0
@@ -1412,14 +1443,16 @@ MonoBehaviour:
     enable: 1
     foldout: 1
     fadeAmount: 1
-    range: 50
+    range: 55
     throwSpeed: 10
-    speed: 30
+    speed: 50
+    acceleration: 1
     maxAngle: 120
     control: 1
     lookResistance: 0.5
     cooldownTime: 1
-    offset: {x: -0.5, y: 0}
+    resetMomentum: 0
+    pivot: {fileID: 1794190846}
     prefab: {fileID: 2992664888159154120, guid: 7098cf68dac0e7b458888a281884342b, type: 3}
   effects:
     enable: 1

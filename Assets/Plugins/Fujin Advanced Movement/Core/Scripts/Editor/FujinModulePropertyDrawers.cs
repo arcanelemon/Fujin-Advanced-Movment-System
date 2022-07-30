@@ -366,7 +366,7 @@ public class FujinCrouchModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.height = EditorGUILayout.Slider("Crouch Height", module.height, 0, 1);
+                module.height = EditorGUILayout.Slider("Crouch Height", module.height, 0.5f, 1.75f);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -428,20 +428,25 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
+                module.multidirectional = EditorGUILayout.Toggle("Multi-Directional", module.multidirectional);
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
                 module.infinite = EditorGUILayout.Toggle("Infinite", module.infinite);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(5);
 
-                if (!module.infinite)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.friction = EditorGUILayout.FloatField("Slide Friction", Mathf.Max(module.friction, 0));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                GUI.enabled = !module.infinite;
+                module.friction = EditorGUILayout.FloatField("Slide Friction", Mathf.Max(module.friction, 0));
+                GUI.enabled = true;
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
@@ -465,7 +470,7 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.height = EditorGUILayout.Slider("Slide Height", module.height, 0, 1);
+                module.height = EditorGUILayout.Slider("Slide Height", module.height, 0.5f, 1.75f);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -1257,14 +1262,19 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
+                module.acceleration = EditorGUILayout.FloatField("Grapple Acceleration", Mathf.Max(0, module.acceleration));
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
                 module.cooldownTime = EditorGUILayout.FloatField("Grapple Cooldown", Mathf.Max(0, module.cooldownTime));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.offset = EditorGUILayout.Vector3Field("Grapple Offset", 
-                    new Vector3(module.offset.x, module.offset.y, Mathf.Max(module.offset.z, 0)), GUILayout.MinWidth(0));
+                module.resetMomentum = EditorGUILayout.Toggle("Reset Momentum", module.resetMomentum);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -1289,6 +1299,12 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(5);
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                module.pivot = (Transform)EditorGUILayout.ObjectField("Grapple Pivot", module.pivot, typeof(Transform), true);
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
