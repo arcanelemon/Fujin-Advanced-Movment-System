@@ -154,24 +154,24 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
                 GUILayout.BeginHorizontal();
                 GUILayout.BeginVertical(EditorStyles.helpBox);
                 GUILayout.BeginHorizontal();
-                module.enableDoubleJumps = EditorGUILayout.Toggle(module.enableDoubleJumps, GUILayout.Width(20));
-                module.doubleJumpFoldout = EditorGUILayout.Foldout(module.doubleJumpFoldout, "Double Jump", true, "Label");
+                module.doubleJump.enable = EditorGUILayout.Toggle(module.doubleJump.enable, GUILayout.Width(20));
+                module.doubleJump.foldout = EditorGUILayout.Foldout(module.doubleJump.foldout, "Double Jump", true, "Label");
                 GUILayout.EndHorizontal();
-                GUI.enabled = module.enableDoubleJumps;
+                GUI.enabled = module.doubleJump.enable;
 
-                if (module.doubleJumpFoldout && module.doubleJumpFadeAmount < 1)
-                    module.doubleJumpFadeAmount += fadeSpeed;
-                else if (!module.doubleJumpFoldout && module.doubleJumpFadeAmount > 0)
-                    module.doubleJumpFadeAmount -= fadeSpeed;
+                if (module.doubleJump.foldout && module.doubleJump.fadeAmount < 1)
+                    module.doubleJump.fadeAmount += fadeSpeed;
+                else if (!module.doubleJump.foldout && module.doubleJump.fadeAmount > 0)
+                    module.doubleJump.fadeAmount -= fadeSpeed;
 
-                module.doubleJumpFadeAmount = Mathf.Clamp(module.doubleJumpFadeAmount, 0, 1);
+                module.doubleJump.fadeAmount = Mathf.Clamp(module.doubleJump.fadeAmount, 0, 1);
 
-                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.doubleJumpFadeAmount))
+                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.doubleJump.fadeAmount))
                 {
                     if (subGroup.visible)
                     {
-                        module.doubleJumpCount = EditorGUILayout.IntField("Double Jump Amount", module.doubleJumpCount);
-                        module.doubleJumpforce = EditorGUILayout.FloatField("Double Jump Force", module.doubleJumpforce);
+                        module.doubleJump.amount = EditorGUILayout.IntField("Double Jump Amount", module.doubleJump.amount);
+                        module.doubleJump.force = EditorGUILayout.FloatField("Double Jump Force", module.doubleJump.force);
                         GUILayout.Space(5);
                     }
                 }
@@ -184,25 +184,25 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
                 GUILayout.BeginHorizontal();
                 GUILayout.BeginVertical(EditorStyles.helpBox);
                 GUILayout.BeginHorizontal();
-                module.enableDrift = EditorGUILayout.Toggle(module.enableDrift, GUILayout.Width(20));
-                module.driftFoldout = EditorGUILayout.Foldout(module.driftFoldout, "Drift", true, "Label");
+                module.jumpDrift.enable = EditorGUILayout.Toggle(module.jumpDrift.enable, GUILayout.Width(20));
+                module.jumpDrift.foldout = EditorGUILayout.Foldout(module.jumpDrift.foldout, "Drift", true, "Label");
                 GUILayout.EndHorizontal();
-                GUI.enabled = module.enableDrift;
+                GUI.enabled = module.jumpDrift.enable;
 
-                if (module.driftFoldout && module.driftFadeAmount < 1)
-                    module.driftFadeAmount += fadeSpeed;
-                else if (!module.driftFoldout && module.driftFadeAmount > 0)
-                    module.driftFadeAmount -= fadeSpeed;
+                if (module.jumpDrift.foldout && module.jumpDrift.fadeAmount < 1)
+                    module.jumpDrift.fadeAmount += fadeSpeed;
+                else if (!module.jumpDrift.foldout && module.jumpDrift.fadeAmount > 0)
+                    module.jumpDrift.fadeAmount -= fadeSpeed;
 
-                module.driftFadeAmount = Mathf.Clamp(module.driftFadeAmount, 0, 1);
+                module.jumpDrift.fadeAmount = Mathf.Clamp(module.jumpDrift.fadeAmount, 0, 1);
 
-                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.driftFadeAmount))
+                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.jumpDrift.fadeAmount))
                 {
                     if (subGroup.visible)
                     {
-                        module.driftPeriod = EditorGUILayout.FloatField("Drift Period", Mathf.Max(0, module.driftPeriod));
-                        module.driftStrength = EditorGUILayout.FloatField("Drift Strength", Mathf.Max(module.driftStrength, 0));
-                        module.driftRedirect = EditorGUILayout.Slider("Drift Redirect", module.driftRedirect, 0, 1);
+                        module.jumpDrift.period = EditorGUILayout.FloatField("Drift Period", Mathf.Max(0, module.jumpDrift.period));
+                        module.jumpDrift.strength = EditorGUILayout.FloatField("Drift Strength", Mathf.Max(module.jumpDrift.strength, 0));
+                        module.jumpDrift.redirect = EditorGUILayout.Slider("Drift Redirect", module.jumpDrift.redirect, 0, 1);
                         GUILayout.Space(5);
                     }
                 }
@@ -215,23 +215,23 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
                 GUILayout.BeginHorizontal();
                 GUILayout.BeginVertical(EditorStyles.helpBox);
                 GUILayout.BeginHorizontal();
-                module.enableWallJump = EditorGUILayout.Toggle(module.enableWallJump, GUILayout.Width(20));
-                module.wallFoldout = EditorGUILayout.Foldout(module.wallFoldout, "Wall Jump", true, "Label");
+                module.wallJump.enable = EditorGUILayout.Toggle(module.wallJump.enable, GUILayout.Width(20));
+                module.wallJump.foldout = EditorGUILayout.Foldout(module.wallJump.foldout, "Wall Jump", true, "Label");
                 GUILayout.EndHorizontal();
-                GUI.enabled = module.enableWallJump;
+                GUI.enabled = module.wallJump.enable;
 
-                if (module.wallFoldout && module.wallFadeAmount < 1)
-                    module.wallFadeAmount += fadeSpeed;
-                else if (!module.wallFoldout && module.wallFadeAmount > 0)
-                    module.wallFadeAmount -= fadeSpeed;
+                if (module.wallJump.foldout && module.wallJump.fadeAmount < 1)
+                    module.wallJump.fadeAmount += fadeSpeed;
+                else if (!module.wallJump.foldout && module.wallJump.fadeAmount > 0)
+                    module.wallJump.fadeAmount -= fadeSpeed;
 
-                module.wallFadeAmount = Mathf.Clamp(module.wallFadeAmount, 0, 1);
+                module.wallJump.fadeAmount = Mathf.Clamp(module.wallJump.fadeAmount, 0, 1);
 
-                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.wallFadeAmount))
+                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.wallJump.fadeAmount))
                 {
                     if (subGroup.visible)
                     {
-                        module.wallJumpforce = EditorGUILayout.FloatField("Wall Jump Force", module.wallJumpforce);
+                        module.wallJump.force = EditorGUILayout.FloatField("Wall Jump Force", module.wallJump.force);
                         GUILayout.Space(5);
                     }
                 }
@@ -366,7 +366,7 @@ public class FujinCrouchModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.height = EditorGUILayout.Slider("Crouch Height", module.height, 0, 1);
+                module.height = EditorGUILayout.Slider("Crouch Height", module.height, 0.5f, 1.75f);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -428,20 +428,25 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
+                module.multidirectional = EditorGUILayout.Toggle("Multi-Directional", module.multidirectional);
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
                 module.infinite = EditorGUILayout.Toggle("Infinite", module.infinite);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(5);
 
-                if (!module.infinite)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.friction = EditorGUILayout.FloatField("Slide Friction", Mathf.Max(module.friction, 0));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                GUI.enabled = !module.infinite;
+                module.friction = EditorGUILayout.FloatField("Slide Friction", Mathf.Max(module.friction, 0));
+                GUI.enabled = true;
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
@@ -465,7 +470,7 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.height = EditorGUILayout.Slider("Slide Height", module.height, 0, 1);
+                module.height = EditorGUILayout.Slider("Slide Height", module.height, 0.5f, 1.75f);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -494,6 +499,7 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 [CustomPropertyDrawer(typeof(FujinDashModule))]
 public class FujinDashModuleDrawer : FujinModuleDrawer
 {
+    Texture2D omniIcon;
     Texture2D leftIcon;
     Texture2D rightIcon;
     Texture2D upIcon;
@@ -503,6 +509,7 @@ public class FujinDashModuleDrawer : FujinModuleDrawer
 
     public override void Init(SerializedProperty property)
     {
+        omniIcon = Resources.Load("Fujin Res/Textures/omni") as Texture2D;
         leftIcon = Resources.Load("Fujin Res/Textures/left") as Texture2D;
         rightIcon = Resources.Load("Fujin Res/Textures/right") as Texture2D;
         upIcon = Resources.Load("Fujin Res/Textures/up") as Texture2D;
@@ -551,18 +558,13 @@ public class FujinDashModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.omnidirectional = EditorGUILayout.Toggle("Omnidirectional", module.omnidirectional);
-                GUILayout.Space(margin);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(margin);
                 GUILayout.Label("Dash Axis");
+                module.omnidirectional = GUILayout.Toggle(module.omnidirectional, omniIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15));
                 GUI.enabled = !module.omnidirectional;
-                module.axis.y = GUILayout.Toggle(module.axis.y > 0, leftIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
-                module.axis.x = GUILayout.Toggle(module.axis.x > 0, rightIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
-                module.axis.z = GUILayout.Toggle(module.axis.z > 0, upIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
-                module.axis.w = GUILayout.Toggle(module.axis.w > 0, downIcon, "Button", GUILayout.Width(22f), GUILayout.Height(13)) ? 1 : 0;
+                module.axis.y = GUILayout.Toggle(module.axis.y > 0, leftIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15)) ? 1 : 0;
+                module.axis.x = GUILayout.Toggle(module.axis.x > 0, rightIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15)) ? 1 : 0;
+                module.axis.z = GUILayout.Toggle(module.axis.z > 0, upIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15)) ? 1 : 0;
+                module.axis.w = GUILayout.Toggle(module.axis.w > 0, downIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15)) ? 1 : 0;
                 GUI.enabled = true;
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
@@ -600,10 +602,61 @@ public class FujinDashModuleDrawer : FujinModuleDrawer
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(5);
+
+                DrawSlowTime();
+
+                GUILayout.Space(5);
             }
         }
 
         GUILayout.EndVertical();
+    }
+
+    void DrawSlowTime()
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.BeginVertical(EditorStyles.helpBox);
+
+        GUILayout.BeginHorizontal();
+        module.slowTime.enable = EditorGUILayout.Toggle(module.slowTime.enable, GUILayout.Width(20));
+        module.slowTime.foldout = EditorGUILayout.Foldout(module.slowTime.foldout, "Slow Time", true, "Label");
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+        GUI.enabled = module.slowTime.enable;
+
+        if (module.slowTime.foldout && module.slowTime.fadeAmount < 1)
+            module.slowTime.fadeAmount += fadeSpeed;
+        else if (!module.slowTime.foldout && module.slowTime.fadeAmount > 0)
+            module.slowTime.fadeAmount -= fadeSpeed;
+
+        module.slowTime.fadeAmount = Mathf.Clamp(module.slowTime.fadeAmount, 0, 1);
+
+        using (var group = new EditorGUILayout.FadeGroupScope(module.slowTime.fadeAmount))
+        {
+            if (group.visible)
+            {
+                GUILayout.Space(5);
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                module.slowTime.timeMultiplier = EditorGUILayout.Slider("Time Multiplier", module.slowTime.timeMultiplier, 0, 1);
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                module.slowTime.transistionSpeed = EditorGUILayout.FloatField("Transition Speed", Mathf.Max(module.slowTime.transistionSpeed, 0));
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.Space(5);
+            }
+        }
+        GUI.enabled = true;
+        GUILayout.EndVertical(); 
+        GUILayout.Space(5);
+        GUILayout.EndHorizontal();
+
     }
 }
 
@@ -1257,14 +1310,19 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
+                module.acceleration = EditorGUILayout.FloatField("Grapple Acceleration", Mathf.Max(0, module.acceleration));
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
                 module.cooldownTime = EditorGUILayout.FloatField("Grapple Cooldown", Mathf.Max(0, module.cooldownTime));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.offset = EditorGUILayout.Vector3Field("Grapple Offset", 
-                    new Vector3(module.offset.x, module.offset.y, Mathf.Max(module.offset.z, 0)), GUILayout.MinWidth(0));
+                module.resetMomentum = EditorGUILayout.Toggle("Reset Momentum", module.resetMomentum);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -1289,6 +1347,12 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(5);
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                module.pivot = (Transform)EditorGUILayout.ObjectField("Grapple Pivot", module.pivot, typeof(Transform), true);
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
@@ -1931,32 +1995,33 @@ public class FujinPhysicsModuleDrawer : FujinModuleDrawer
 
                     // Draw Gradient
                     GL.Begin(GL.QUADS);
-                    
-                    increment = width / 90;
+
+                    x = 2 * margin;
+                    increment = (width - 2 * margin) / 90;
                     float diff = module.slopeAngle * module.slopeFallOff;
                     float fallOff = module.slopeAngle - diff;
 
                     GL.Color(new Color(0, 1, 0, 0.3f));
-                    GL.Vertex3(increment * fallOff, 0, 0);
+                    GL.Vertex3(x + increment * Mathf.Min(fallOff, 89), 0, 0);
                     GL.Color(new Color(1, 1, 0, 0.3f));
-                    GL.Vertex3(increment * (fallOff + diff / 2), 0, 0);
-                    GL.Vertex3(increment * (fallOff + diff / 2), layoutRectangle.height, 0);
+                    GL.Vertex3(x + increment * Mathf.Min(fallOff + diff / 2, 89), 0, 0);
+                    GL.Vertex3(x + increment * Mathf.Min(fallOff + diff / 2, 89), layoutRectangle.height, 0);
                     GL.Color(new Color(0, 1, 0, 0.3f));
-                    GL.Vertex3(increment * fallOff, layoutRectangle.height, 0);
+                    GL.Vertex3(x + increment * Mathf.Min(fallOff, 89), layoutRectangle.height, 0);
 
                     GL.Color(new Color(1, 1, 0, 0.3f));
-                    GL.Vertex3(increment * (fallOff + diff / 2), 0, 0);
+                    GL.Vertex3(x + increment * Mathf.Min((fallOff + diff / 2), 89), 0, 0);
                     GL.Color(new Color(1, 0, 0, 0.3f));
-                    GL.Vertex3(increment * module.slopeAngle, 0, 0);
-                    GL.Vertex3(increment * module.slopeAngle, layoutRectangle.height, 0);
+                    GL.Vertex3(x + increment * Mathf.Min(module.slopeAngle, 89), 0, 0);
+                    GL.Vertex3(x + increment * Mathf.Min(module.slopeAngle, 89), layoutRectangle.height, 0);
                     GL.Color(new Color(1, 1, 0, 0.3f));
-                    GL.Vertex3(increment * (fallOff + diff / 2), layoutRectangle.height, 0);
+                    GL.Vertex3(x + increment * Mathf.Min((fallOff + diff / 2), 89), layoutRectangle.height, 0);
 
-                    GL.Color(new Color(1, 0, 0, 0.3f));
-                    GL.Vertex3(increment * Mathf.Min(module.slopeAngle, 89), 0, 0);
+                    GL.Color(new Color(1, 0, 0, 0.4f));
+                    GL.Vertex3(x + increment * Mathf.Min(module.slopeAngle, 89), 0, 0);
                     GL.Vertex3(width, 0, 0);
                     GL.Vertex3(width, layoutRectangle.height, 0);
-                    GL.Vertex3(increment * Mathf.Min(module.slopeAngle, 89), layoutRectangle.height, 0);
+                    GL.Vertex3(x + increment * Mathf.Min(module.slopeAngle, 89), layoutRectangle.height, 0);
 
                     GL.End();
 

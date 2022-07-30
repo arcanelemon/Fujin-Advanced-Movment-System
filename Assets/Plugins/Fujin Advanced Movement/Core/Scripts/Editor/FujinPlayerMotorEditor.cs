@@ -870,14 +870,11 @@ public class FujinPlayerMotorEditor : Editor
 
                 GUILayout.Space(18);
 
-                if (physicModule.wallStick > 0)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    GUILayout.Toggle(motor.OnWall, "On Wall");
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                EditorGUILayout.FloatField("Speed", motor.Velocity.magnitude);
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
@@ -891,19 +888,22 @@ public class FujinPlayerMotorEditor : Editor
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(margin);
-                EditorGUILayout.FloatField("Target Speed", motor.Speed);
-                GUILayout.Space(margin);
-                GUILayout.EndHorizontal();
-
                 GUILayout.Space(5);
 
-                if (jumpModule.enable && jumpModule.enableDoubleJumps && !motor.Grounded)
+                if (jumpModule.enable && jumpModule.doubleJump.enable && !motor.Grounded)
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
                     EditorGUILayout.IntField("Jumps", motor.Jumps);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+                }
+
+                if (physicModule.wallStick > 0)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    GUILayout.Toggle(motor.OnWall, "On Wall");
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
                 }
