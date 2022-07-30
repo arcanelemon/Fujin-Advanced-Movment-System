@@ -1058,7 +1058,7 @@ namespace Fujin
             Vector3 targetVelocity = force *
                 (transform.right * moveInputs.x
                 + transform.forward * moveInputs.y).normalized;
-            targetVelocity = Vector3.Lerp(velocity, targetVelocity, jump.driftRedirect);
+            targetVelocity = Vector3.Lerp(velocity, targetVelocity, jump.driftRedirect / 100);
             rb.velocity = targetVelocity + Vector3.up * rb.velocity.y;
         }
 
@@ -1465,7 +1465,7 @@ namespace Fujin
             // Check if End Conditions are  met
             float angle = Vector3.Angle(direction, counterDirection);
             float distance = Vector3.Distance(cam.transform.position, grappleObj.transform.position);
-            bool inView = Physics.Raycast(cam.transform.position, direction, grapple.range, collisionExclusionMask);
+            bool inView = !Physics.Raycast(cam.transform.position, direction, distance  - 1, collisionExclusionMask);
 
             // End grpple if angle > 90, grapple blocked, about to collide, or moving too slow.
             if (!inView || angle > grapple.maxAngle || (grappleInitiated && speed < 0.01f) || distance < .1f || distance > grapple.range)
