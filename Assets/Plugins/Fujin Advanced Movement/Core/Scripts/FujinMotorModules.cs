@@ -37,6 +37,14 @@ namespace Fujin
         public float driftStrength;
         public float driftRedirect;
         public bool enableDrift;
+
+        public bool driftFoldout;
+        public bool doubleJumpFoldout;
+        public bool wallFoldout;
+
+        public float doubleJumpFadeAmount;
+        public float driftFadeAmount;
+        public float wallFadeAmount;
     }
 
     [System.Serializable]
@@ -73,6 +81,7 @@ namespace Fujin
     {
         public int count;
         public float force;
+        public float momentum;
         public float duration;
         public float cooldownTime;
         public bool canDashInAir;
@@ -169,7 +178,7 @@ namespace Fujin
         public float control;
         public float lookResistance;
         public float cooldownTime;
-        public Vector2 offset;
+        public Vector3 offset;
         public GameObject prefab;
     }
 
@@ -185,6 +194,8 @@ namespace Fujin
         public class Headbob
         {
             public bool enable;
+            public bool foldout;
+            public float fadeAmount;
             public float verticalAmount;
             public float horizontalAmount;
             public float speedMultiplier;
@@ -194,16 +205,18 @@ namespace Fujin
         public class Sway
         {
             public bool enable;
+            public bool foldout;
+            public float fadeAmount;
             public bool idleFoldout;
             public bool lookFoldout;
             public bool moveFoldout;
             public bool fallFoldout;
             public bool impactFoldout;
-            public float idleTilt;
+            public Vector2 idleTilt;
             public Vector2 idleOffset; 
             public float idleSpeed;
-            public float lookTilt;
-            public float lookOffset; 
+            public Vector2 lookTilt;
+            public Vector2 lookOffset; 
             public float lookSpeed;
             public float moveTilt;
             public float moveOffset; 
@@ -222,6 +235,8 @@ namespace Fujin
         public class FOV 
         {
             public bool enable;
+            public bool foldout;
+            public float fadeAmount;
             public float multiplier;
             public float speed;
             public float minVelocity;
@@ -232,6 +247,8 @@ namespace Fujin
         public class Speedlines
         {
             public bool enable;
+            public bool foldout;
+            public float fadeAmount;
             public float amount;
             public float thiness;
             public float radius;
@@ -246,6 +263,20 @@ namespace Fujin
     [System.Serializable]
     public class FujinPhysicsModule : FujinMotorModule
     {
+        public bool generalFoldout = true;
+        public bool airFoldout = true;
+        public bool stepFoldout = true;
+        public bool slopeFoldout = true;
+        public bool wallFoldout = true;
+        public bool layerFoldout = true;
+
+        public float generalFadeAmount;
+        public float airFadeAmount;
+        public float stepFadeAmount;
+        public float slopeFadeAmount;
+        public float wallFadeAmount;
+        public float layersFadeAmount;
+
         public float gravityMultiplier;
         public bool limitVelocity;
         public Vector2 maxVelocity;
@@ -306,11 +337,10 @@ namespace Fujin
 
     public abstract class FujinMotorModule
     {
-        [HideInInspector]
         public bool enable;
-        [HideInInspector]
-        public bool foldout; // inspector only
 
-        //public abstract void Reset();
+        // inspector only
+        public bool foldout; 
+        public float fadeAmount;
     }
 }
