@@ -83,12 +83,12 @@ namespace Fujin
     {
         public float height;
         public float force;
+        public float slopeAcceleration;
+        public float forceCooldown;
         public float friction;
-        public float maxSpeed;
         public float tiltAngle;
         public float tiltSpeed;
         public float control;
-        public bool infinite;
         public bool multidirectional;
         public bool hold;
     }
@@ -199,16 +199,29 @@ namespace Fujin
     [System.Serializable]
     public class FujinGrappleModule : FujinMotorModule
     {
+        public bool controlFoldout;
+        public bool simFoldout;
+        public bool componentFoldout;
+        public bool wrap;
+        public int wrapCount;
         public float range;
         public float throwSpeed;
         public float speed;
         public float acceleration;
         public float maxAngle;
-        public float control;
+        public float viewControl;
+        public float inputControl;
+        public float tilt;
         public float lookResistance;
+        public float elasticity;
         public float cooldownTime;
-        public bool resetMomentum;
+        public int quality;
+        public float wobble;
+        public float waveCount;
+        public float waveHeight;
         public Transform pivot;
+        public GameObject impactEffect;
+        public GameObject breakEffect;
         public GameObject prefab;
     }
 
@@ -216,6 +229,7 @@ namespace Fujin
     public class FujinEffectsModule : FujinMotorModule
     {
         public Headbob headbob = new Headbob();
+        public Footsteps footsteps = new Footsteps();
         public Sway sway = new Sway();
         public FOV fov = new FOV();
         public Speedlines speedlines = new Speedlines();
@@ -226,9 +240,27 @@ namespace Fujin
             public bool enable;
             public bool foldout;
             public float fadeAmount;
+            public float frequency;
             public float verticalAmount;
             public float horizontalAmount;
-            public float speedMultiplier;
+        }
+
+        [System.Serializable]
+        public class Footsteps
+        {
+            // Editor
+            public bool enable;
+            public bool foldout;
+            public float fadeAmount;
+
+            // Fields
+            public float frequency;
+            public Vector2 volumeRange;
+            public Vector2 pitchRange;
+            public AudioClip sound;
+
+            // Instance
+            public AudioSource source;
         }
 
         [System.Serializable]
@@ -310,6 +342,7 @@ namespace Fujin
         public float gravityMultiplier;
         public bool limitVelocity;
         public Vector2 maxVelocity;
+        public float friction;
         public float airDrag;
         public float airTurnRate;
         public bool turnRateFromVelocity;

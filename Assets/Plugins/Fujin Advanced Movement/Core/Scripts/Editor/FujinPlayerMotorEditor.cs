@@ -595,13 +595,15 @@ public class FujinPlayerMotorEditor : Editor
             {
                 GUILayout.BeginVertical(EditorStyles.helpBox);
                 GUILayout.Space(5);
-                motor.tab = GUILayout.Toolbar(motor.tab, new string[] { "Config", "Physics", "Components" });
+                motor.tab = GUILayout.Toolbar(motor.tab, new string[] { "Config", "Physics", "Layers", "Components" });
 
                 if (motor.tab == 0)
                     DrawModules();
                 else if (motor.tab == 1)
                     DrawPhysics();
                 else if (motor.tab == 2)
+                    DrawLayers();
+                else if (motor.tab == 3)
                     DrawComponents();
 
                 GUILayout.Space(5);
@@ -657,6 +659,36 @@ public class FujinPlayerMotorEditor : Editor
         EditorGUILayout.PropertyField(physicsProperty);
     }
 
+    void DrawLayers() 
+    {
+        GUILayout.BeginVertical(EditorStyles.helpBox);
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        EditorGUILayout.Popup("Ground", 0, new string[] { });
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        EditorGUILayout.Popup("Walls", 0, new string[] { });
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        EditorGUILayout.Popup("Interact", 0, new string[] { });
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(margin);
+        EditorGUILayout.Popup("Exclude", 0, new string[] { });
+        GUILayout.Space(margin);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(5);
+        GUILayout.EndVertical();
+    }
+
     /// <summary>
     /// DrawComponents
     /// Draw miscellaneous configurable fields and components related to <code>FujinPlayerMotor</code>
@@ -668,12 +700,6 @@ public class FujinPlayerMotorEditor : Editor
         GUILayout.BeginHorizontal();
         GUILayout.Space(margin);
         motor.hideMouseOnAwake = EditorGUILayout.Toggle("Hide Mouse On Awake", motor.hideMouseOnAwake);
-        GUILayout.Space(margin);
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(margin);
-        EditorGUILayout.Toggle("Control Height", true);
         GUILayout.Space(margin);
         GUILayout.EndHorizontal();
 
@@ -869,6 +895,12 @@ public class FujinPlayerMotorEditor : Editor
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(18);
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                EditorGUILayout.LabelField("Ground Layer", LayerMask.LayerToName(motor.GroundLayer));
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
