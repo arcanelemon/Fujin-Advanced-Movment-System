@@ -81,16 +81,20 @@ namespace Fujin
     [System.Serializable]
     public class FujinSlideModule : FujinMotorModule
     {
+        // Config
         public float height;
-        public float force;
+        public float boost;
+        public float boostTimer;
         public float slopeAcceleration;
-        public float forceCooldown;
         public float friction;
         public float tiltAngle;
         public float tiltSpeed;
         public float control;
         public bool multidirectional;
         public bool hold;
+
+        // Instance
+        public bool boosted;
     }
 
     [System.Serializable]

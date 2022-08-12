@@ -434,7 +434,7 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.force = EditorGUILayout.FloatField("Slide Force", Mathf.Max(module.force, 0));
+                module.boost = EditorGUILayout.FloatField("Slide Boost", Mathf.Max(module.boost, 0));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 

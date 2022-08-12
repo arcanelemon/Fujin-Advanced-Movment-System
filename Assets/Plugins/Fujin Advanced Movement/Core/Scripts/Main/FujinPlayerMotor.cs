@@ -260,7 +260,7 @@ namespace Fujin
                             direction = newDirection;
                     }
 
-                    StartSlide(direction, slide.force);
+                    StartSlide(direction, slide.boost);
                 }
             }
         }
@@ -1183,11 +1183,14 @@ namespace Fujin
         /// </summary>
         void StartSlide(Vector3 direction, float force)
         {
-            targetHeight = slide.height;
+            if (slide.boosted)
+                force = 0;
 
+            targetHeight = slide.height;
             slideDirection = Vector3.ProjectOnPlane(direction, normal).normalized;
             rb.AddForce(slideDirection * force, ForceMode.Impulse);
             movementState = MovementState.Sliding;
+            StartSlideBoostCoroutine();
         }
 
         /// <summary>
@@ -1680,7 +1683,7 @@ namespace Fujin
             else
                 grappleBreakTimer = 0;
 
-            float angle = Vector3.Angle(direction, cam.transform.forward) * 4;
+            float angle = Vector3.Angle(direction, cam.transform.forward) * 2;
             distance = Vector3.Distance(grappleObj.transform.position, cam.transform.position);
             if (grappleBreakTimer > 1f || angle > grapple.maxAngle 
                 || distance < 1f || distance > grapple.range + 1f ||
@@ -2041,10 +2044,10 @@ namespace Fujin
                         float force = 0;
                         direction = new Vector3(rb.velocity.x, 0, rb.velocity.z);
                         float magnitude = direction.magnitude;
-                        if (magnitude < slide.force)
+                        if (magnitude < slide.boost)
                         {
                             direction = transform.forward;
-                            force = slide.force;
+                            force = slide.boost;
                         }
                         
                         StartSlide(direction, force);
@@ -2585,6 +2588,7 @@ namespace Fujin
         IEnumerator wallStickCoroutine;
         IEnumerator jumpGraceCoroutine;
         IEnumerator jumpDriftCoroutine;
+        IEnumerator slideBoostCoroutine;
         IEnumerator exitClimbCoroutine;
 
         /// <summary>
@@ -2615,7 +2619,7 @@ namespace Fujin
             yield return new WaitForSeconds(physics.wallStickDuration);
             applyWallstick = false;
         }
-        
+
         /// <summary>
         /// Restarts the coroutine <code>exitClimbCoroutine</code>
         /// </summary>
@@ -2675,6 +2679,36 @@ namespace Fujin
             jumpDrift = true;
             yield return new WaitForSeconds(jump.jumpDrift.period);
             jumpDrift = false;
+        }
+
+        /// <summary>
+        /// Restarts the coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StartSlideBoostCoroutine()
+        {
+            StopSlideBoostCoroutine();
+            slideBoostCoroutine = YieldSlideBoostTime();
+            StartCoroutine(slideBoostCoroutine);
+        }
+
+        /// <summary>
+        /// Stops the current coroutine <code>exitClimbCoroutine</code>
+        /// </summary>
+        void StopSlideBoostCoroutine()
+        {
+            if (slideBoostCoroutine != null)
+                StopCoroutine(slideBoostCoroutine);
+        }
+
+        /// <summary>
+        /// Waits for <code>FujinClimbModule.duration</code> and exits climb.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator YieldSlideBoostTime()
+        {
+            slide.boosted = true;
+            yield return new WaitForSeconds(3);
+            slide.boosted = false;
         }
 
         /// <summary>
