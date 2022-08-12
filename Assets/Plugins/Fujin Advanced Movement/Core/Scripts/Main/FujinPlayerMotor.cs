@@ -880,7 +880,6 @@ namespace Fujin
             cyan.a = 0.3f;
             red.a = 0.3f;
 
-
             // Direction
             Gizmos.color = Color.magenta;
             Gizmos.DrawLine(transform.position, transform.position + normal);

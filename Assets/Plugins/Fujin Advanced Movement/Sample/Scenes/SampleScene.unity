@@ -1437,16 +1437,19 @@ MonoBehaviour:
     speedMultiplier: 0.4
   slide:
     enable: 1
-    foldout: 0
-    fadeAmount: 0
+    foldout: 1
+    fadeAmount: 1
     height: 0.5
-    force: 10
+    boost: 5
+    boostTimer: 0
+    slopeAcceleration: 0.2
     friction: 0.2
     tiltAngle: 30
     tiltSpeed: 1
     control: 1
     multidirectional: 0
     hold: 0
+    boosted: 0
   dash:
     enable: 1
     foldout: 0
@@ -1538,8 +1541,8 @@ MonoBehaviour:
     lookResistance: 0
   grapple:
     enable: 1
-    foldout: 1
-    fadeAmount: 1
+    foldout: 0
+    fadeAmount: 0
     controlFoldout: 0
     simFoldout: 0
     componentFoldout: 0
@@ -1566,15 +1569,24 @@ MonoBehaviour:
     prefab: {fileID: 2992664888159154120, guid: 7098cf68dac0e7b458888a281884342b, type: 3}
   effects:
     enable: 1
-    foldout: 0
-    fadeAmount: 0
+    foldout: 1
+    fadeAmount: 1
     headbob:
-      enable: 1
-      foldout: 1
-      fadeAmount: 1
+      enable: 0
+      foldout: 0
+      fadeAmount: 0
       frequency: 10
       verticalAmount: 0.1
       horizontalAmount: 0.1
+    footsteps:
+      enable: 1
+      foldout: 0
+      fadeAmount: 0
+      frequency: 0
+      volumeRange: {x: 0, y: 0}
+      pitchRange: {x: 0, y: 0}
+      sound: {fileID: 0}
+      source: {fileID: 0}
     sway:
       enable: 1
       foldout: 0
