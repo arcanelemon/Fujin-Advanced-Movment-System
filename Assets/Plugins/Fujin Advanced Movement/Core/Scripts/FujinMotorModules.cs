@@ -84,7 +84,7 @@ namespace Fujin
         // Config
         public float height;
         public float boost;
-        public float boostTimer;
+        public float boostDelay;
         public float slopeAcceleration;
         public float friction;
         public float tiltAngle;
