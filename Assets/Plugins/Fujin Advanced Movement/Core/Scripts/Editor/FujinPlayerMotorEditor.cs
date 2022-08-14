@@ -168,7 +168,6 @@ public class FujinPlayerMotorEditor : Editor
     {
         GUILayout.Label("", GUILayout.Height(0));
         Rect rect = GUILayoutUtility.GetLastRect();
-
         GUI.DrawTexture(new Rect(rect.x, rect.y + 2.5f, rect.width, 24), backgroundTexture, ScaleMode.StretchToFill, true, 0, Color.white, 0, 3);
         GUI.DrawTexture(new Rect(rect.x + rect.width - 17.5f, rect.y + 5, 17.5f, 17.5f), value ? dropdownActiveTexture : dropdownNormalTexture);
         GUILayout.BeginHorizontal(EditorStyles.helpBox); 

@@ -9,6 +9,7 @@ using Supyrb;
 /// </summary>
 
 [CustomPropertyDrawer(typeof(FujinMovementModule))]
+[CustomPropertyDrawer(typeof(FujinMovementModule))]
 public class FujinMovementModuleDrawer : FujinModuleDrawer
 {
     FujinMovementModule module;
@@ -422,7 +423,7 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.hold = EditorGUILayout.Toggle("Hold", module.hold);
+                module.hold = EditorGUILayout.Toggle("Hold [Crouch Disabled]", module.hold);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -435,6 +436,12 @@ public class FujinSlideModuleDrawer : FujinModuleDrawer
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
                 module.boost = EditorGUILayout.FloatField("Slide Boost", Mathf.Max(module.boost, 0));
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                module.boostDelay = EditorGUILayout.FloatField("Slide Boost Delay", Mathf.Max(module.boostDelay, 0));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 

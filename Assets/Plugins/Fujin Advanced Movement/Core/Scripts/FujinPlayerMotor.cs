@@ -88,6 +88,7 @@ namespace Fujin
             Climbing = 9,
             WallRunning = 10,
             Grappling = 11,
+            Ziplining = 12
         }
 
         MovementState movementState = MovementState.Default;
@@ -260,7 +261,7 @@ namespace Fujin
                             direction = newDirection;
                     }
 
-                    StartSlide(direction, slide.boost);
+                    StartSlide(direction);
                 }
             }
         }
@@ -1180,16 +1181,20 @@ namespace Fujin
         /// StartSlide
         /// Sets <code>movementState</code> to <code>MovementState.Sliding</code> and associated variables.
         /// </summary>
-        void StartSlide(Vector3 direction, float force)
+        void StartSlide(Vector3 direction)
         {
-            if (slide.boosted)
-                force = 0;
+            float force = 0;
+
+            if (!slide.boosted)
+            {
+                force = slide.boost;
+                StartSlideBoostCoroutine();
+            }
 
             targetHeight = slide.height;
             slideDirection = Vector3.ProjectOnPlane(direction, normal).normalized;
             rb.AddForce(slideDirection * force, ForceMode.Impulse);
             movementState = MovementState.Sliding;
-            StartSlideBoostCoroutine();
         }
 
         /// <summary>
@@ -1682,7 +1687,10 @@ namespace Fujin
             else
                 grappleBreakTimer = 0;
 
-            float angle = Vector3.Angle(direction, cam.transform.forward) * 2;
+            float angle = Vector3.Angle(targetDirection, cam.transform.forward);
+            if (angle > 180)
+                angle -= 180;
+
             distance = Vector3.Distance(grappleObj.transform.position, cam.transform.position);
             if (grappleBreakTimer > 1f || angle > grapple.maxAngle 
                 || distance < 1f || distance > grapple.range + 1f ||
@@ -2040,16 +2048,14 @@ namespace Fujin
                 {
                     if (slideInput || movementState == MovementState.Sliding)
                     {
-                        float force = 0;
                         direction = new Vector3(rb.velocity.x, 0, rb.velocity.z);
                         float magnitude = direction.magnitude;
                         if (magnitude < slide.boost)
                         {
                             direction = transform.forward;
-                            force = slide.boost;
                         }
                         
-                        StartSlide(direction, force);
+                        StartSlide(direction);
                     }
                     else if (sprintInput && movementState != MovementState.Sprinting)
                         Sprint();
@@ -2706,7 +2712,7 @@ namespace Fujin
         IEnumerator YieldSlideBoostTime()
         {
             slide.boosted = true;
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(slide.boostDelay);
             slide.boosted = false;
         }
 
