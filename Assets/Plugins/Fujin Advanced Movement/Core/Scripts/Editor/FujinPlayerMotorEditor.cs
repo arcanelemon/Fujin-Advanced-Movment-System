@@ -217,126 +217,144 @@ public class FujinPlayerMotorEditor : Editor
             if (group.visible)
             {
                 GUILayout.BeginVertical(EditorStyles.helpBox);
+                GUILayout.Space(10); 
+                
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(25);
+                if (inputModule.enable)
+                    GUI.contentColor = Color.green;
+                else
+                    GUI.contentColor = Color.white;
+                inputModule.enable = GUILayout.Toggle(inputModule.enable, inputModule.enable? "Enabled" : "Disabled", "Button");
+                GUILayout.Space(25);
+                GUILayout.EndHorizontal();
                 GUILayout.Space(5);
 
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(margin);
-                GUILayout.Label("Invert Axis");
-                GUILayout.FlexibleSpace();
-                inputModule.lookAxis.x = GUILayout.Toggle(inputModule.lookAxis.x < 0, "X", "Button", GUILayout.Width(23.5f), GUILayout.Height(18f)) ? -1 : 1;
-                inputModule.lookAxis.y = GUILayout.Toggle(inputModule.lookAxis.y < 0, "Y", "Button", GUILayout.Width(23.5f), GUILayout.Height(18f)) ? -1 : 1;
-                GUILayout.Space(margin);
-                GUILayout.EndHorizontal();
+                GUI.contentColor = Color.white;
 
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(margin);
-                GUILayout.Label("Look Sensitivity");
-                inputModule.lookSensitivity = EditorGUILayout.Slider(inputModule.lookSensitivity, 0.01f, 2);
-                GUILayout.Space(margin);
-                GUILayout.EndHorizontal();
-
-                GUILayout.Space(5);
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(margin);
-                EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("lookAction"));
-                GUILayout.Space(margin);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(margin);
-                EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("moveAction"));
-                GUILayout.Space(margin);
-                GUILayout.EndHorizontal();
-
-                if (jumpModule.enable)
+                if (inputModule.enable)
                 {
+
+                    GUILayout.Space(5);
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("jumpAction"));
+                    GUILayout.Label("Invert Axis");
+                    GUILayout.FlexibleSpace();
+                    inputModule.lookAxis.x = GUILayout.Toggle(inputModule.lookAxis.x < 0, "X", "Button", GUILayout.Width(23.5f), GUILayout.Height(18f)) ? -1 : 1;
+                    inputModule.lookAxis.y = GUILayout.Toggle(inputModule.lookAxis.y < 0, "Y", "Button", GUILayout.Width(23.5f), GUILayout.Height(18f)) ? -1 : 1;
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
-                }
 
-                if (sprintModule.enable)
-                {
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("sprintAction"));
+                    GUILayout.Label("Look Sensitivity");
+                    inputModule.lookSensitivity = EditorGUILayout.Slider(inputModule.lookSensitivity, 0.01f, 2);
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
-                }
 
-                if (crouchModule.enable | slideModule.enable)
-                {
+                    GUILayout.Space(5);
+
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("crouchSlideAction"));
+                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("lookAction"));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
-                }
 
-                if (dashModule.enable)
-                {
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("dashAction"));
+                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("moveAction"));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
-                }
 
-                if (poundModule.enable)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("poundAction"));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                    if (jumpModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("jumpAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
 
-                if (autorunModule.enable)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("autorunAction"));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                    if (sprintModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("sprintAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
 
-                if (leanModule.enable)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("leanAction"));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                    if (crouchModule.enable | slideModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("crouchSlideAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
 
-                if (freelookModule.enable)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("freelookAction"));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                    if (dashModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("dashAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
 
-                if (slowwalkModule.enable)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("slowwalkAction"));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-                }
+                    if (poundModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("poundAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
 
-                if (grappleModule.enable)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("grappleAction"));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
+                    if (autorunModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("autorunAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
+
+                    if (leanModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("leanAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
+
+                    if (freelookModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("freelookAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
+
+                    if (slowwalkModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("slowwalkAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
+
+                    if (grappleModule.enable)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(margin);
+                        EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("grappleAction"));
+                        GUILayout.Space(margin);
+                        GUILayout.EndHorizontal();
+                    }
                 }
 
                 GUILayout.Space(5);

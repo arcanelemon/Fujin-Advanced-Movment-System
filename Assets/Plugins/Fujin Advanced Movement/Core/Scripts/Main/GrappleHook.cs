@@ -10,7 +10,6 @@ public class GrappleHook : MonoBehaviour
     float rotationSpeed;
 
     float rotation;
-    Vector3 previousPosition;
 
     #endregion Variables
     
@@ -32,16 +31,18 @@ public class GrappleHook : MonoBehaviour
 
     #region Private Methods
 
-    void Rotate() 
+    void Rotate()
     {
-        rotation += rotationSpeed * 10 * Vector3.Distance(transform.position, previousPosition);
+        rotation += rotationSpeed * 100 * Time.deltaTime;
         if (rotation > 360)
             rotation -= 360;
 
-        Vector3 euler = transform.localEulerAngles;
-        transform.localRotation = Quaternion.Euler(euler.x, euler.y, rotation);
-
-        previousPosition = transform.position;
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            Vector3 euler = child.localEulerAngles;
+            child.localRotation = Quaternion.Euler(euler.x, euler.y, rotation);
+        }
     }
 
     #endregion Private Methods

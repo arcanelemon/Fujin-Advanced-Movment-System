@@ -29,7 +29,7 @@ namespace Fujin
         public float force;
         public float gracePeriod;
         public DoubleJump doubleJump = new DoubleJump();
-        public JumpDrift jumpDrift = new JumpDrift();
+        public Hover hover = new Hover();
         public WallJump wallJump = new WallJump();
 
         [System.Serializable]
@@ -40,17 +40,18 @@ namespace Fujin
             public float fadeAmount;
             public int amount;
             public float force;
+            public float redirect;
         }
 
         [System.Serializable]
-        public class JumpDrift
+        public class Hover
         {
             public bool enable;
             public bool foldout;
             public float fadeAmount;
-            public float period;
-            public float strength;
-            public float redirect;
+            public float fallForce;
+            public float duration;
+            public bool useDuration;
         }
 
         [System.Serializable]
@@ -157,12 +158,10 @@ namespace Fujin
     {
         public float speed;
         public float accelaration;
-        public bool useAccelaration;
+        public float decelleration;
         public float boost;
-        public bool useBoost;
-        public float minHeight;
-        public bool useDrag;
         public float drag;
+        public float minHeight;
         public bool useDuration;
         public float duration;
     }
@@ -219,14 +218,28 @@ namespace Fujin
         public float lookResistance;
         public float elasticity;
         public float cooldownTime;
+        public float thickness;
+        public int sides;
         public int quality;
-        public float wobble;
-        public float waveCount;
-        public float waveHeight;
+        public float wobbleAmount;
+        public float wobbleWaveCount;
+        public float wobbleWaveHeight;
+        public float spiralAmount;
+        public float spiralOffset;
+        public float spiralRotationSpeed;
+        public float spiralDamper;
+        public SimulationType simType;
         public Transform pivot;
         public GameObject impactEffect;
         public GameObject breakEffect;
         public GameObject prefab;
+
+        public enum SimulationType 
+        {
+            None = 0,
+            Wobble = 1,
+            Spiral = 2
+        }
     }
 
     [System.Serializable]

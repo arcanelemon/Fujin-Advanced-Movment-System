@@ -1,45 +1,46 @@
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(LineRenderer))]
+[RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
 public class FujinRope : MonoBehaviour
 {
     #region Variables
 
-    public enum Type 
+    public enum Orientation 
     {
         Horizontal = 0,
         Vertical = 1
     }
 
-    public bool forward;
-    public bool backward;
+    public bool straighten;
+    public bool meshActive => meshRenderer.enabled;
     public float speed;
     public float wobble;
+    public int sides;
+    public float thickness;
     public int quality;
-    public Type type;
+    public Orientation orientation;
     public Material mat;
     public Transform[] anchors;
-    FujinCurve curve = new FujinCurve();
 
+    bool initialized;
+    [SerializeField]
+    FujinCurve curve;
+    Mesh mesh;
+    MeshRenderer meshRenderer;
     List<Rigidbody> rigidbodies = new List<Rigidbody>();
 
     // Editor
-    public bool edit;
     public bool show;
+    public bool edit;
     public bool anchorFoldout;
     public int toolbarSelection;
 
     #endregion Variables
 
     #region Engine
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        Init();
-    }
 
     // Update is called once per frame
     void Update()
@@ -55,20 +56,32 @@ public class FujinRope : MonoBehaviour
 
     #region Private Methods
 
-    void UpdateFromCurve()
+    void GenerateMesh() 
     {
-        // stretch mesh
+        List<Vector3> vertices = new List<Vector3>();
+
+        for (int i = 0; i <= quality; i++)
+            vertices.Add(curve.GetPoint(i / (float)quality)); 
+        
+        FujinMeshGenerator.GenerateRope(sides, thickness, vertices.ToArray(), mesh, new Vector2(100, 100));
+    }
+
+    void SetAnchors() 
+    {
+        Quaternion rotation = orientation == Orientation.Vertical?
+           Quaternion.Euler(0, 0, 90) : Quaternion.identity;
 
         // set anchors
         if (anchors[0] != null)
+        {
+            anchors[0].rotation = rotation;
             anchors[0].position = GetPoint(0);
+        }
         if (anchors[1] != null)
+        {
+            anchors[1].rotation = rotation;
             anchors[1].position = GetPoint(quality - 1);
-    }
-
-    void StretchMesh() 
-    {
-        
+        }
     }
 
     #endregion Private Methods
@@ -77,10 +90,29 @@ public class FujinRope : MonoBehaviour
 
     public void Init() 
     {
-        if (anchors.Length == 0) 
+        if (initialized)
+            return;
+
+        if (anchors.Length != 2) 
         {
             anchors = new Transform[2];
         }
+
+        if (mesh == null)
+        {
+            mesh = new Mesh();
+            GetComponent<MeshFilter>().mesh = mesh;
+            meshRenderer = GetComponent<MeshRenderer>();
+        }
+
+        UpdateFromCurve();
+        initialized = true;
+    }
+
+    public void SetMaterial(Material mat) 
+    {
+        this.mat = mat;
+        meshRenderer.material = mat;
     }
 
     public Vector3 GetPoint(float t) 
@@ -98,6 +130,12 @@ public class FujinRope : MonoBehaviour
         return curve.points;
     }
 
+    public void UpdateFromCurve()
+    {
+        GenerateMesh();
+        SetAnchors();
+    }
+
     public void UpdateCurve(Vector3[] points) 
     {
         if (points.Length != curve.points.Length) 
@@ -109,48 +147,53 @@ public class FujinRope : MonoBehaviour
             return;
         }
 
-        if (type == Type.Vertical)
+        if (orientation == Orientation.Vertical)
         {
-            points[2].x = points[0].x;
-            points[2].z = points[0].z;
+            curve.points[2].x = curve.points[0].x;
+            curve.points[2].z = curve.points[0].z;
             curve.Straighten();
-
-            anchors[0].rotation = Quaternion.Euler(0, 0, 90);
-            anchors[1].rotation = Quaternion.Euler(0, 0, 90);
         }
 
         curve.points = points;
+        if (straighten)
+            curve.Straighten();
         UpdateFromCurve();
     }
 
     public void FlipOrientation() 
     {
-        Vector3[] points = curve.points;
-        if (type == Type.Vertical)
+        if (orientation == Orientation.Vertical)
         {
-            points[2].x = points[0].x;
-            points[2].z = points[0].z;
-            Straighten();
-
-            anchors[0].rotation = Quaternion.Euler(0, 0 , 90);
-            anchors[1].rotation = Quaternion.Euler(0, 0, 90);
-        } else 
-        {
-            anchors[0].rotation = Quaternion.identity;
-            anchors[1].rotation = Quaternion.identity;
+            curve.points[2].x = curve.points[0].x;
+            curve.points[2].z = curve.points[0].z;
+            curve.Straighten();
         }
+
+        UpdateFromCurve();
     }
 
     public void Revert()
     {
-        curve.Reset();
+        if(orientation == Orientation.Vertical) 
+        {
+            curve.points = new Vector3[] {
+            new Vector3(0, 2f, 0),
+            new Vector3(0, 1f, 0),
+            new Vector3(0, 0f, 0) };
+        } else 
+        {
+            curve.points = new Vector3[] {
+            new Vector3(0, 0f, 0f),
+            new Vector3(0, 0f, 1f),
+            new Vector3(0, 0f, 2f) };
+        }
+
         UpdateFromCurve();
     }
 
-    public void Straighten() 
+    public void ToggleMesh() 
     {
-        curve.Straighten();
-        UpdateFromCurve();
+        meshRenderer.enabled = !meshRenderer.enabled;
     }
 
     public void OnInteract(Rigidbody rigidbody) 

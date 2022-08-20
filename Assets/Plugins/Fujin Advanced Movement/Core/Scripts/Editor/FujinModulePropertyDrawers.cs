@@ -173,6 +173,7 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
                     {
                         module.doubleJump.amount = EditorGUILayout.IntField("Double Jump Amount", module.doubleJump.amount);
                         module.doubleJump.force = EditorGUILayout.FloatField("Double Jump Force", module.doubleJump.force);
+                        module.doubleJump.redirect = EditorGUILayout.Slider("Double Jump Redirect", module.doubleJump.redirect, 0, 1);
                         GUILayout.Space(5);
                     }
                 }
@@ -185,31 +186,37 @@ public class FujinJumpModuleDrawer : FujinModuleDrawer
                 GUILayout.BeginHorizontal();
                 GUILayout.BeginVertical(EditorStyles.helpBox);
                 GUILayout.BeginHorizontal();
-                module.jumpDrift.enable = EditorGUILayout.Toggle(module.jumpDrift.enable, GUILayout.Width(20));
-                module.jumpDrift.foldout = EditorGUILayout.Foldout(module.jumpDrift.foldout, "Drift", true, "Label");
+                module.hover.enable = EditorGUILayout.Toggle(module.hover.enable, GUILayout.Width(20));
+                module.hover.foldout = EditorGUILayout.Foldout(module.hover.foldout, "Hover", true, "Label");
                 GUILayout.EndHorizontal();
-                GUI.enabled = module.jumpDrift.enable;
+                GUI.enabled = module.hover.enable;
 
-                if (module.jumpDrift.foldout && module.jumpDrift.fadeAmount < 1)
-                    module.jumpDrift.fadeAmount += fadeSpeed;
-                else if (!module.jumpDrift.foldout && module.jumpDrift.fadeAmount > 0)
-                    module.jumpDrift.fadeAmount -= fadeSpeed;
+                if (module.hover.foldout && module.hover.fadeAmount < 1)
+                    module.hover.fadeAmount += fadeSpeed;
+                else if (!module.hover.foldout && module.hover.fadeAmount > 0)
+                    module.hover.fadeAmount -= fadeSpeed;
 
-                module.jumpDrift.fadeAmount = Mathf.Clamp(module.jumpDrift.fadeAmount, 0, 1);
+                module.hover.fadeAmount = Mathf.Clamp(module.hover.fadeAmount, 0, 1);
 
-                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.jumpDrift.fadeAmount))
+                using (var subGroup = new EditorGUILayout.FadeGroupScope(module.hover.fadeAmount))
                 {
                     if (subGroup.visible)
                     {
-                        module.jumpDrift.period = EditorGUILayout.FloatField("Drift Period", Mathf.Max(0, module.jumpDrift.period));
-                        module.jumpDrift.strength = EditorGUILayout.FloatField("Drift Strength", Mathf.Max(module.jumpDrift.strength, 0));
-                        module.jumpDrift.redirect = EditorGUILayout.Slider("Drift Redirect", module.jumpDrift.redirect, 0, 1);
+                        module.hover.fallForce = EditorGUILayout.FloatField("Fall Force", 
+                            Mathf.Max(module.hover.fallForce, 0));
+                        GUILayout.BeginHorizontal();
+                        module.hover.useDuration = EditorGUILayout.Toggle("Use Hover Duration", 
+                            module.hover.useDuration);
+                        GUI.enabled = module.hover.useDuration;
+                        module.hover.duration = EditorGUILayout.FloatField(Mathf.Max(module.hover.duration, 0));
+                        GUI.enabled = true;
+                        GUILayout.EndHorizontal();
                         GUILayout.Space(5);
                     }
                 }
 
                 GUI.enabled = true;
-                GUILayout.EndVertical();
+                GUILayout.EndVertical(); 
                 GUILayout.Space(3);
                 GUILayout.EndHorizontal();
 
@@ -973,26 +980,27 @@ public class FujinWallrunModuleDrawer : FujinModuleDrawer
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
-                GUILayout.Space(5);
-
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.useAccelaration = EditorGUILayout.Toggle("Wall Run Acceleration", module.useAccelaration);
-                module.accelaration = EditorGUILayout.FloatField(Mathf.Max(module.accelaration, 0));
+                module.accelaration = EditorGUILayout.FloatField("Wall Run Acceleration", Mathf.Max(module.accelaration, 0));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.useBoost = EditorGUILayout.Toggle("Wall Run Speed Boost", module.useBoost);
-                module.boost = EditorGUILayout.FloatField(Mathf.Max(module.boost, 0));
+                module.decelleration = EditorGUILayout.FloatField("Wall Run Decceleration", Mathf.Max(module.decelleration, 0));
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(margin);
-                module.useDrag = EditorGUILayout.Toggle("Wall Run Drag", module.useDrag);
-                module.drag = EditorGUILayout.Slider(module.drag, 0, 1);
+                module.boost = EditorGUILayout.FloatField("Wall Run Speed Boost", Mathf.Max(module.boost, 0));
+                GUILayout.Space(margin);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(margin);
+                module.drag = EditorGUILayout.Slider("Wall Run Drag", module.drag, 0, 1);
                 GUILayout.Space(margin);
                 GUILayout.EndHorizontal();
 
@@ -1383,10 +1391,26 @@ public class FujinGrappleModuleDrawer : FujinModuleDrawer
 
                 if (module.simFoldout)
                 {
-                    module.wobble = EditorGUILayout.FloatField("Wobble", Mathf.Max(module.wobble, 0));
-                    module.waveCount = EditorGUILayout.IntField("Wave Count", Mathf.Max((int)module.waveCount, 0));
-                    module.waveHeight = EditorGUILayout.FloatField("Wave Height", Mathf.Max(module.waveHeight, 0));
-                    module.quality = (int)EditorGUILayout.Slider("Quality", module.quality, 1, 1028);
+                    module.simType = (FujinGrappleModule.SimulationType)EditorGUILayout.EnumPopup(module.simType);
+                        if (module.simType == FujinGrappleModule.SimulationType.Wobble)
+                        {
+                            module.wobbleAmount = EditorGUILayout.FloatField("Wobble Amount", Mathf.Max(module.wobbleAmount, 0));
+                            module.wobbleWaveCount = EditorGUILayout.IntField("Wobble Wave Count", Mathf.Max((int)module.wobbleWaveCount, 0));
+                            module.wobbleWaveHeight = EditorGUILayout.FloatField("Wobble Wave Height", Mathf.Max(module.wobbleWaveHeight, 0));
+
+                    }
+                        else if (module.simType == FujinGrappleModule.SimulationType.Spiral)
+                    {
+                            module.spiralAmount = EditorGUILayout.FloatField("Spiral Amount", Mathf.Max(module.spiralAmount, 0));
+                            module.spiralOffset = EditorGUILayout.FloatField("Spiral Offset", Mathf.Max(module.spiralOffset, 0));
+                            module.spiralRotationSpeed = EditorGUILayout.FloatField("Spiral Rotation Speed", Mathf.Max(module.spiralRotationSpeed, 0));
+                            module.spiralDamper = EditorGUILayout.Slider("Spiral Damper", module.spiralDamper, 0, 1);
+
+                    }
+                            
+                        module.sides = EditorGUILayout.IntField("Sides", Mathf.Max(module.sides, 3));
+                        module.thickness = EditorGUILayout.FloatField("Thickness", Mathf.Max(module.thickness, 0));
+                        module.quality = (int)EditorGUILayout.Slider("Quality", module.quality, 1, 1028);
                     GUILayout.Space(2.5f);
                 }
                 GUILayout.EndVertical();
