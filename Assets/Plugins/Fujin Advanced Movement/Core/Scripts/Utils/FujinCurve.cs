@@ -1,22 +1,14 @@
 
 using UnityEngine;
 
+[System.Serializable]
 public class FujinCurve
 {
     public Vector3[] points = new Vector3[] {
+            new Vector3(0, 0f, 0f),
             new Vector3(0, 0f, 1f),
-            new Vector3(0, 0f, 2f),
-            new Vector3(0, 0f, 3f)
+            new Vector3(0, 0f, 2f)
         };
-
-    public void Reset()
-    {
-        points = new Vector3[] {
-            new Vector3(0, 0f, 1f),
-            new Vector3(0, 0f, 2f),
-            new Vector3(0, 0f, 3f)
-        };
-    }
 
     public void Straighten() 
     {
