@@ -42,9 +42,14 @@ public class FujinGravityLift : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        // Copy to remove modification warnings
+        Dictionary<Rigidbody, float> newMapping = new Dictionary<Rigidbody, float>(mapping);
+
         // Where is a KeyValuePair of Rigidbody and Time
-        foreach (KeyValuePair<Rigidbody, float> e in mapping) 
+        foreach (KeyValuePair<Rigidbody, float> e in newMapping)
         {
+            //** Transform Vectors **//
+
             // Grab local velocity
             Vector3 velocity;
             velocity = transform.InverseTransformDirection(e.Key.velocity);
@@ -57,7 +62,7 @@ public class FujinGravityLift : MonoBehaviour
             Vector3 position = transform.InverseTransformPoint(e.Key.position);
             Vector2 direction = (Vector2.zero - new Vector2(position.x, position.z)).normalized;
 
-            // Apply forces
+            //** Apply forces **//
             // Result is direction * dampening
             float force = e.Value * Time.deltaTime;
             velocity.x += direction.x * force;
@@ -70,7 +75,6 @@ public class FujinGravityLift : MonoBehaviour
                 position.x + (velocity.x * Time.deltaTime), 
                 position.z + (velocity.z * Time.deltaTime));
             Vector2 newDirection = (Vector2.zero - newPosition).normalized;
-            //float dot = Vector3.Dot(direction, newDirection);
 
             if (Vector3.Dot(direction, newDirection) < 0)
             {
@@ -81,7 +85,6 @@ public class FujinGravityLift : MonoBehaviour
             // Edge Point
             Vector3 newVelocity = new Vector3
                 (velocity.x + force * direction.x, velocity.y, velocity.z + force * direction.y);
-            //dot = Vector3.Dot(velocity, newVelocity);
 
             if (Vector3.Dot(velocity, newVelocity) < 0)
             {
@@ -89,7 +92,8 @@ public class FujinGravityLift : MonoBehaviour
                 mapping[e.Key] = centerForce;
             }
 
-            // Finish up
+            //** Finish up **//
+
             e.Key.velocity = transform.TransformDirection(velocity);
         }
     }
@@ -115,12 +119,4 @@ public class FujinGravityLift : MonoBehaviour
     }
 
     #endregion Engine
-
-    #region Private Methods
-
-    #endregion Private Methods
-
-    #region Public Methods
-
-    #endregion Public Methods
 }
