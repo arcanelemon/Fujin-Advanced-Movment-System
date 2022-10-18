@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DecalPainter = Fujin.Utils.DecalPainter;
 
 namespace Fujin.Addons
 {
@@ -28,92 +30,40 @@ namespace Fujin.Addons
             }
         }
 
-        void OnTriggerEnter(Collider other)
+        private void OnCollisionEnter(Collision collision)
         {
-            if (other.isTrigger)
+            if ((emitter.collisionLayers & (1 << collision.gameObject.layer)) != 0)
                 return;
 
-            SpawnSurface();
+            DecalPainter.Paint(emitter.brush, collision.contacts[0].point, collision.gameObject.GetComponent<Renderer>());
             Destroy(gameObject);
         }
 
         #endregion Engine
 
-        #region Private Methods
-
-        void SpawnSurface()
-        {
-            int i = 0;
-            PhysicsSurface[] otherSurfaces = GameObject.FindObjectsOfType<PhysicsSurface>();
-            List<PhysicsSurface> overlappingSurfaces = new List<PhysicsSurface>();
-            foreach (PhysicsSurface otherSurface in otherSurfaces)
-            {
-                float distance = Vector3.Distance(otherSurface.transform.position + emitter.splashRadius * (transform.position - otherSurface.transform.position).normalized,
-                  transform.position);
-                if (distance <= emitter.splashRadius)
-                {
-                    i++;
-                    if (i > emitter.maxOverlaps)
-                        return;
-
-                    overlappingSurfaces.Add(otherSurface);
-                }
-            }
-
-            if (emitter.fadeOnOverlap)
-            {
-                foreach (PhysicsSurface overlappingSurface in overlappingSurfaces)
-                {
-                    Renderer renderer = overlappingSurface.GetComponent<Renderer>();
-                    if (renderer)
-                    {
-                        float distance = Vector3.Distance(overlappingSurface.transform.position + emitter.splashRadius * (transform.position - overlappingSurface.transform.position).normalized,
-                        transform.position);
-                        MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
-                        renderer.GetPropertyBlock(propBlock);
-                        Color color = propBlock.GetColor("_Color");
-                        float a = color.a - (emitter.fadeOverlapAmount * (distance / emitter.splashRadius));
-
-                        if (a <= 0)
-                        {
-                            Destroy(GetComponent<Collider>().gameObject);
-                            continue;
-                        }
-
-                        color.a = a;
-                        propBlock.SetColor("_Color", color);
-                        renderer.SetPropertyBlock(propBlock);
-                    }
-                }
-            }
-
-            GameObject surface = Instantiate(emitter.surface, transform.position,
-               Quaternion.Euler(new Vector3(0, Random.Range(0f, 360f), 0)), transform.parent);
-            surface.transform.localScale *= emitter.splashRadius;
-
-            if (emitter.overrideMaterialColor)
-            {
-                Renderer renderer = surface.GetComponent<Renderer>();
-
-                if (renderer != null)
-                {
-                    MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
-                    renderer.GetPropertyBlock(propBlock);
-                    propBlock.SetColor("_Color", emitter.color);
-                    propBlock.SetFloat("_Alpha", emitter.color.a);
-                    renderer.SetPropertyBlock(propBlock);
-                }
-            }
-        }
-
-        #endregion Private Methods
-
         #region Public Methods
+
+        public void Init() 
+        {
+            previousPosition = transform.position;
+            gameObject.layer = LayerMask.NameToLayer("Physics Particle");
+            
+            // Add Components
+            gameObject.AddComponent<SphereCollider>();
+            gameObject.AddComponent<Rigidbody>();
+            Renderer renderer = gameObject.AddComponent<MeshRenderer>();
+
+            // Create Shape
+            MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(propBlock);
+            propBlock.SetColor("_Color", emitter.color);
+            renderer.SetPropertyBlock(propBlock);
+        }
 
         public void Init(PhysicsEmitter emitter)
         {
             this.emitter = emitter;
-            previousPosition = transform.position;
+            Init();
         }
 
         #endregion Public Methods

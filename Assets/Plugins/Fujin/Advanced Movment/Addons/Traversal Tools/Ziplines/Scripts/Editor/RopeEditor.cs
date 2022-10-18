@@ -7,8 +7,8 @@ namespace Fujin.Editor
 {
 
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(Rope))]
-    public class FujinRopeEditor : UnityEditor.Editor
+    [CustomEditor(typeof(Zipline))]
+    public class ZiplineEditor : UnityEditor.Editor
     {
         #region Variables
 
@@ -23,7 +23,7 @@ namespace Fujin.Editor
         Color selectColor = new Color(Color.cyan.r, Color.cyan.g, Color.cyan.b, 0.5f);
         Tool currentTool;
 
-        Rope rope;
+        Zipline rope;
 
         #endregion Variables
 
@@ -31,7 +31,7 @@ namespace Fujin.Editor
 
         void OnEnable()
         {
-            rope = (Rope)target;
+            rope = (Zipline)target;
             rope.Init();
             currentTool = Tools.current;
         }
@@ -47,16 +47,35 @@ namespace Fujin.Editor
                 Init();
 
             GUILayout.Space(10);
+
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Space(3);
+            GUILayout.BeginHorizontal();
             rope.speed = EditorGUILayout.FloatField("Speed", rope.speed);
+            GUILayout.Space(EditorUtils.MARGIN);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
             rope.wobble = EditorGUILayout.FloatField("Wobble", rope.wobble);
+            GUILayout.Space(EditorUtils.MARGIN);
+            GUILayout.EndHorizontal();
             EditorGUI.BeginChangeCheck();
+            GUILayout.BeginHorizontal();
             rope.mat = (Material)EditorGUILayout.ObjectField("Material", rope.mat, typeof(Material), true);
             if (EditorGUI.EndChangeCheck())
                 rope.SetMaterial(rope.mat);
+            GUILayout.Space(EditorUtils.MARGIN);
+            GUILayout.EndHorizontal();
+            GUILayout.Space(3);
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUI.BeginChangeCheck();
             GUILayout.BeginHorizontal();
-            GUILayout.Space(12);
+            GUILayout.Space(2 * EditorUtils.MARGIN);
+            GUI.backgroundColor = Color.clear;
             EditorGUILayout.PropertyField(serializedObject.FindProperty("anchors"));
+            GUI.backgroundColor = Color.white;
+            GUILayout.Space(EditorUtils.MARGIN);
             GUILayout.EndHorizontal();
             if (EditorGUI.EndChangeCheck())
             {
@@ -68,6 +87,7 @@ namespace Fujin.Editor
                 else if (rope.anchors.Length == 0)
                     rope.anchors = new Transform[] { null, null };
             }
+            GUILayout.EndVertical();
 
             GUILayout.Space(15);
 
@@ -81,7 +101,7 @@ namespace Fujin.Editor
             if (shapeFoldout)
             {
                 EditorGUI.BeginChangeCheck();
-                rope.orientation = (Rope.Orientation)EditorGUILayout.EnumPopup("Orientation", rope.orientation);
+                rope.orientation = (Zipline.Orientation)EditorGUILayout.EnumPopup("Orientation", rope.orientation);
                 if (EditorGUI.EndChangeCheck())
                 {
                     rope.FlipOrientation();

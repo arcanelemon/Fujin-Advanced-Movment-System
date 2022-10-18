@@ -1,5 +1,6 @@
 
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEditor;
 using Fujin.Movement;
 using Supyrb;
@@ -11,7 +12,178 @@ namespace Fujin.Editor
     /// Collection of custom property drawers used to draw motor modules.
     /// </summary>
 
-    [CustomPropertyDrawer(typeof(MovementModule))]
+    [CustomPropertyDrawer(typeof(InteractModule))]
+    class InteractModuleDrawer : ModuleDrawer
+    {
+        InteractModule module;
+
+        public override void Init(SerializedProperty property)
+        {
+            background = EditorUtils.MakeTex(1, 1, backgroundColor);
+
+            initialized = true;
+            module = property.GetValue<InteractModule>();
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            if (!initialized)
+                Init(property);
+
+            GUI.DrawTexture(new Rect(position.x, position.y + 5, position.width, 20), background, ScaleMode.StretchToFill, true, 0, Color.white, 0, 3);
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.foldout = GUILayout.Toggle(module.foldout, "Interact", "Label");
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            if (module.foldout && module.fadeAmount < 1)
+                module.fadeAmount += fadeSpeed;
+            else if (!module.foldout && module.fadeAmount > 0)
+                module.fadeAmount -= fadeSpeed;
+
+            module.fadeAmount = Mathf.Clamp(module.fadeAmount, 0, 1);
+
+            using (var group = new EditorGUILayout.FadeGroupScope(module.fadeAmount))
+            {
+                if (group.visible)
+                {
+                    GUILayout.Space(5);
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.drawDistance = EditorGUILayout.Slider("Draw Distance", module.drawDistance, 0, 10);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.drawRadius = EditorGUILayout.Slider("Draw Radius", module.drawRadius, 0, 2);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.highlightMaterial = (Material)EditorGUILayout.ObjectField("Highlight Material", module.highlightMaterial, typeof(Material), false);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    EditorGUILayout.PropertyField(property.FindPropertyRelative("interactLayer"));
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    EditorGUILayout.PropertyField(property.FindPropertyRelative("interactAction"), new GUIContent("Interact Action"));
+
+                    GUILayout.Space(5);
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(3);
+                    GUILayout.BeginVertical(EditorStyles.helpBox);
+                    GUILayout.BeginHorizontal();
+                    module.enableHold = EditorGUILayout.Toggle(module.enableHold, GUILayout.Width(20));
+                    module.holdFoldout = EditorGUILayout.Foldout(module.holdFoldout, "Hold", true, "Label");
+                    GUILayout.EndHorizontal();
+                    GUI.enabled = module.holdFoldout;
+
+                    if (module.holdFoldout && module.holdFadeAmount < 1)
+                        module.holdFadeAmount += fadeSpeed;
+                    else if (!module.holdFoldout && module.holdFadeAmount > 0)
+                        module.holdFadeAmount -= fadeSpeed;
+
+                    module.holdFadeAmount = Mathf.Clamp(module.holdFadeAmount, 0, 1);
+
+                    using (var subGroup = new EditorGUILayout.FadeGroupScope(module.holdFadeAmount))
+                    {
+                        if (subGroup.visible)
+                        {
+                            GUI.enabled = module.enableHold; 
+                            module.defaultHoldTime = EditorGUILayout.FloatField("Default Hold Time", Mathf.Max(module.defaultHoldTime, 0));
+                            EditorGUILayout.PropertyField(property.FindPropertyRelative("holdAction"), new GUIContent("Hold Action"));
+                            EditorGUILayout.HelpBox("Query object for hold time before executing interact action.", MessageType.Info);
+
+                            GUILayout.Space(3);
+                        }
+                    }
+                    GUI.enabled = true;
+                    GUILayout.EndVertical();
+                    GUILayout.Space(3);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.BeginVertical(EditorStyles.helpBox);
+                    GUILayout.BeginHorizontal();
+                    module.enablePickup = EditorGUILayout.Toggle(module.enablePickup, GUILayout.Width(20));
+                    module.pickupFoldout = EditorGUILayout.Foldout(module.pickupFoldout, "Pickup", true, "Label");
+                    GUILayout.EndHorizontal();
+                    GUI.enabled = module.pickupFoldout;
+
+                    if (module.pickupFoldout && module.pickupFadeAmount < 1)
+                        module.pickupFadeAmount += fadeSpeed;
+                    else if (!module.pickupFoldout && module.pickupFadeAmount > 0)
+                        module.pickupFadeAmount -= fadeSpeed;
+
+                    module.pickupFadeAmount = Mathf.Clamp(module.pickupFadeAmount, 0, 1);
+
+                    using (var subGroup = new EditorGUILayout.FadeGroupScope(module.pickupFadeAmount))
+                    {
+                        if (subGroup.visible)
+                        {
+                            GUI.enabled = module.enablePickup;
+                            module.pickupForce = EditorGUILayout.FloatField("Pickup Force", Mathf.Max(module.pickupForce, 0));
+                            GUILayout.BeginHorizontal();
+                            module.pickupCenterObjects = EditorGUILayout.Toggle("Center Object", module.pickupCenterObjects);
+                            if (!module.pickupCenterObjects)
+                                GUI.enabled = false;
+                            module.pickupCenterDistance = EditorGUILayout.Slider("Offset", module.pickupCenterDistance, 0, module.drawDistance);
+                            GUI.enabled = module.enablePickup;
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
+                            module.pickupLimitSpeed = EditorGUILayout.Toggle("Weight-Based Turn Rate", module.pickupLimitSpeed);
+                            if (!module.pickupLimitSpeed)
+                                GUI.enabled = false;
+                            module.maxPickupWeight = EditorGUILayout.FloatField("Max Weight", module.maxPickupWeight, GUILayout.MinWidth(0));
+                            GUI.enabled = module.enablePickup;
+                            GUILayout.EndHorizontal();
+
+                            module.throwForce = EditorGUILayout.FloatField("Throw Force", module.throwForce);
+
+                            GUILayout.BeginHorizontal();
+                            module.enableThrowCharge = EditorGUILayout.Toggle("Charge Throw", module.enableThrowCharge);
+                            if (!module.enableThrowCharge)
+                                GUI.enabled = false;
+                            module.throwChargeTime = EditorGUILayout.FloatField(Mathf.Max(module.throwChargeTime, 0), GUILayout.MinWidth(0));
+                            GUI.enabled = module.enablePickup;
+                            GUILayout.EndHorizontal();
+
+                            if (module.enableThrowCharge) 
+                            {
+                                module.throwGracePeriod = EditorGUILayout.FloatField("Throw Grace Period", Mathf.Max(module.throwGracePeriod, 0), GUILayout.MinWidth(0));
+                            }
+
+                            EditorGUILayout.PropertyField(property.FindPropertyRelative("pickupLayer"));
+
+                            GUILayout.Space(3);
+                            GUI.enabled = true;
+                        }
+                    }
+
+                    GUI.enabled = true;
+                    GUILayout.EndVertical();
+                    GUILayout.Space(3);
+                    GUILayout.EndHorizontal();
+                    GUILayout.Space(5);
+                }
+            }
+
+            GUILayout.EndVertical();
+        }
+    }
+
     [CustomPropertyDrawer(typeof(MovementModule))]
     public class MovementModuleDrawer : ModuleDrawer
     {
@@ -75,20 +247,6 @@ namespace Fujin.Editor
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
                     module.airAcceleration = EditorGUILayout.FloatField("Air Acceleration", Mathf.Max(module.airAcceleration, 0));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.Space(5);
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.tiltAngle = EditorGUILayout.Slider("Tilt Angle", module.tiltAngle, 0, 30);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.tiltSpeed = EditorGUILayout.FloatField("Tilt Speed", Mathf.Max(0.01f, module.tiltSpeed));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
@@ -160,43 +318,6 @@ namespace Fujin.Editor
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
                     GUILayout.Space(5); 
-                    
-                    GUILayout.BeginHorizontal();
-                    GUILayout.BeginVertical(EditorStyles.helpBox);
-                    GUILayout.BeginHorizontal();
-                    module.directionalJump.enable = EditorGUILayout.Toggle(module.directionalJump.enable, GUILayout.Width(20));
-                    module.directionalJump.foldout = EditorGUILayout.Foldout(module.directionalJump.foldout, "Directional Jump", true, "Label");
-                    GUILayout.EndHorizontal();
-                    GUI.enabled = module.directionalJump.enable;
-
-                    if (module.directionalJump.foldout && module.directionalJump.fadeAmount < 1)
-                        module.directionalJump.fadeAmount += fadeSpeed;
-                    else if (!module.directionalJump.foldout && module.directionalJump.fadeAmount > 0)
-                        module.directionalJump.fadeAmount -= fadeSpeed;
-
-                    module.directionalJump.fadeAmount = Mathf.Clamp(module.directionalJump.fadeAmount, 0, 1);
-
-                    using (var subGroup = new EditorGUILayout.FadeGroupScope(module.directionalJump.fadeAmount))
-                    {
-                        if (subGroup.visible)
-                        {
-                            module.directionalJump.amount = EditorGUILayout.Slider("Directional Amount", module.directionalJump.amount, 0 , 1);
-                           
-                            GUILayout.BeginHorizontal();
-                            GUILayout.Label("Directional Axis");
-                            module.directionalJump.axis.x = GUILayout.Toggle(module.directionalJump.axis.x > 0, horizontalIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15)) ? 1 : 0;
-                            module.directionalJump.axis.y = GUILayout.Toggle(module.directionalJump.axis.y > 0, upIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15)) ? 1 : 0;
-                            module.directionalJump.axis.z = GUILayout.Toggle(module.directionalJump.axis.z > 0, downIcon, "Button", GUILayout.Width(22f), GUILayout.Height(15)) ? 1 : 0;
-                            GUILayout.EndHorizontal();
-
-                            GUILayout.Space(5);
-                        }
-                    }
-
-                    GUI.enabled = true;
-                    GUILayout.EndVertical();
-                    GUILayout.Space(3);
-                    GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.BeginVertical(EditorStyles.helpBox);
@@ -346,12 +467,6 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.hold = EditorGUILayout.Toggle("Hold", module.hold);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
                     module.speedMultiplier = EditorGUILayout.FloatField("Sprint Speed Multiplier", Mathf.Max(1, module.speedMultiplier));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
@@ -405,12 +520,6 @@ namespace Fujin.Editor
                 if (group.visible)
                 {
                     GUILayout.Space(5);
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.hold = EditorGUILayout.Toggle("Hold", module.hold);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
@@ -476,12 +585,6 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.hold = EditorGUILayout.Toggle("Hold [Crouch Disabled]", module.hold);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
                     module.multidirectional = EditorGUILayout.Toggle("Multi-Directional", module.multidirectional);
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
@@ -489,12 +592,6 @@ namespace Fujin.Editor
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
                     module.boost = EditorGUILayout.FloatField("Slide Boost", Mathf.Max(module.boost, 0));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.boostDelay = EditorGUILayout.FloatField("Slide Boost Delay", Mathf.Max(module.boostDelay, 0));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
@@ -530,17 +627,9 @@ namespace Fujin.Editor
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
-                    GUILayout.Space(5);
-
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.tiltAngle = EditorGUILayout.Slider("Tilt Angle", module.tiltAngle, 0, 30);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.tiltSpeed = EditorGUILayout.FloatField("Tilt Speed", Mathf.Max(module.tiltSpeed, 0));
+                    module.cooldown = EditorGUILayout.FloatField("Slide Cooldown", Mathf.Max(module.cooldown, 0));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
@@ -632,13 +721,13 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.momentum = EditorGUILayout.Slider("Carry Momentum", module.momentum, 0, 1);
+                    module.duration = EditorGUILayout.FloatField("Dash Duration", Mathf.Max(module.duration, 0));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.duration = EditorGUILayout.FloatField("Dash Time", Mathf.Max(module.duration, 0));
+                    module.momentum = EditorGUILayout.Slider("Carry Momentum", module.momentum, 0, 1);
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
@@ -817,7 +906,7 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.height = EditorGUILayout.Slider("Max Height", module.height, 0.5f, 1.75f);
+                    module.height = EditorGUILayout.Slider("Max Mantle Height", module.height, 0, 3);
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
@@ -938,12 +1027,6 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.minHeight = EditorGUILayout.FloatField("Min Height", Mathf.Max(module.minHeight, 0));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
                     module.speed = EditorGUILayout.FloatField("Wall Run Speed", Mathf.Max(module.speed, 0));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
@@ -962,6 +1045,12 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
+                    module.breakSpeed = EditorGUILayout.FloatField("Wall Run Break Speed", Mathf.Max(module.breakSpeed, 0));
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     module.boost = EditorGUILayout.FloatField("Wall Run Speed Boost", Mathf.Max(module.boost, 0));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
@@ -974,10 +1063,106 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.useDuration = EditorGUILayout.Toggle("Wall Run Duration", module.useDuration);
-                    module.duration = EditorGUILayout.FloatField(Mathf.Max(module.duration, 0));
+                    module.minHeight = EditorGUILayout.FloatField("Wall Min Height", Mathf.Max(module.minHeight, 0));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.useDuration = EditorGUILayout.Toggle("Wall Run Duration", module.useDuration);
+                    GUI.enabled = module.useDuration;
+                    module.duration = EditorGUILayout.FloatField(Mathf.Max(module.duration, 0));
+                    GUI.enabled = true;
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.Space(5);
+                }
+            }
+
+            GUILayout.EndVertical();
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(KickModule))]
+    public class KickModuleDrawer : ModuleDrawer
+    {
+        KickModule module;
+
+        public override void Init(SerializedProperty property)
+        {
+            background = EditorUtils.MakeTex(1, 1, backgroundColor);
+            initialized = true;
+            module = property.GetValue<KickModule>();
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            if (!initialized)
+                Init(property);
+
+            if (!module.enable)
+                return;
+
+            GUI.DrawTexture(new Rect(position.x, position.y + 5, position.width, 20), background, ScaleMode.StretchToFill, true, 0, Color.white, 0, 3);
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.foldout = GUILayout.Toggle(module.foldout, "Kick", "Label");
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            if (module.foldout && module.fadeAmount < 1)
+                module.fadeAmount += fadeSpeed;
+            else if (!module.foldout && module.fadeAmount > 0)
+                module.fadeAmount -= fadeSpeed;
+
+            module.fadeAmount = Mathf.Clamp(module.fadeAmount, 0, 1);
+
+            using (var group = new EditorGUILayout.FadeGroupScope(module.fadeAmount))
+            {
+                if (group.visible)
+                {
+                    GUILayout.Space(5);
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.force = EditorGUILayout.FloatField("Kick Force", Mathf.Max(module.force, 0));
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.time = EditorGUILayout.FloatField("Kick Time", Mathf.Max(module.time, 0));
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.resetTime = EditorGUILayout.FloatField("Reset Time", Mathf.Max(module.resetTime, 0));
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.speedMultiplier = EditorGUILayout.Slider("Speed Multiplier", module.speedMultiplier, 0, 1);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.lookResistance = EditorGUILayout.Slider("Look Resistance", module.lookResistance, 0, 1);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    EditorGUILayout.PropertyField(property.FindPropertyRelative("kickLayer"));;
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+                    
+                    EditorGUILayout.PropertyField(property.FindPropertyRelative("action"), new GUIContent("Kick Action"));
 
                     GUILayout.Space(5);
                 }
@@ -1028,11 +1213,6 @@ namespace Fujin.Editor
                 if (group.visible)
                 {
                     GUILayout.Space(5);
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.hold = EditorGUILayout.Toggle("Hold", module.hold);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
@@ -1089,11 +1269,6 @@ namespace Fujin.Editor
                 if (group.visible)
                 {
                     GUILayout.Space(5);
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.hold = EditorGUILayout.Toggle("Hold", module.hold);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
@@ -1167,11 +1342,6 @@ namespace Fujin.Editor
                 if (group.visible)
                 {
                     GUILayout.Space(5);
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.hold = EditorGUILayout.Toggle("Hold", module.hold);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
@@ -1326,12 +1496,6 @@ namespace Fujin.Editor
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.tilt = EditorGUILayout.Slider("Tilt", module.tilt, 0, 45);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
                     GUILayout.Space(5);
 
                     GUILayout.BeginVertical(EditorStyles.helpBox);
@@ -1452,10 +1616,9 @@ namespace Fujin.Editor
                 {
                     GUILayout.Space(5);
 
-                    DrawHeadbob();
-                    DrawFootsteps();
+                    DrawCameraFX();
                     DrawSway();
-                    DrawFOV();
+                    DrawFootsteps();
                     DrawSpeedlines();
 
                     GUILayout.Space(5);
@@ -1465,49 +1628,163 @@ namespace Fujin.Editor
             GUILayout.EndVertical();
         }
 
-        void DrawHeadbob()
+        void DrawCameraFX()
         {
             GUILayout.BeginVertical(EditorStyles.helpBox);
 
             GUILayout.BeginHorizontal();
-            module.headbob.enable = EditorGUILayout.Toggle(module.headbob.enable, GUILayout.Width(20));
-            module.headbob.foldout = EditorGUILayout.Foldout(module.headbob.foldout, "Headbob", true, "Label");
+            module.camera.enable = EditorGUILayout.Toggle(module.camera.enable, GUILayout.Width(20));
+            module.camera.foldout = EditorGUILayout.Foldout(module.camera.foldout, "Camera FX", true, "Label");
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
-            GUI.enabled = module.headbob.enable;
+            GUI.enabled = module.camera.enable;
 
-            if (module.headbob.foldout && module.headbob.fadeAmount < 1)
-                module.headbob.fadeAmount += fadeSpeed;
-            else if (!module.headbob.foldout && module.headbob.fadeAmount > 0)
-                module.headbob.fadeAmount -= fadeSpeed;
+            if (module.camera.foldout && module.camera.fadeAmount < 1)
+                module.camera.fadeAmount += fadeSpeed;
+            else if (!module.camera.foldout && module.camera.fadeAmount > 0)
+                module.camera.fadeAmount -= fadeSpeed;
 
-            module.headbob.fadeAmount = Mathf.Clamp(module.headbob.fadeAmount, 0, 1);
+            module.camera.fadeAmount = Mathf.Clamp(module.camera.fadeAmount, 0, 1);
 
-            using (var group = new EditorGUILayout.FadeGroupScope(module.headbob.fadeAmount))
+            using (var group = new EditorGUILayout.FadeGroupScope(module.camera.fadeAmount))
             {
                 if (group.visible)
                 {
-                    GUILayout.Space(5);
+                    GUILayout.Space(margin);
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.headbob.frequency = EditorGUILayout.FloatField("Frequency", Mathf.Max(module.headbob.frequency, 0));
+                    GUILayout.BeginVertical(EditorStyles.helpBox);
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(2 * margin);
+                    module.camera.tilt.foldout = EditorGUILayout.Foldout(module.camera.tilt.foldout, "Tilt & Noise", true);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    if (module.camera.tilt.foldout)
+                    {
+                        GUILayout.Space(5);
+                        GUILayout.BeginVertical(EditorStyles.helpBox);
+                        GUILayout.Space(2);
+                        GUILayout.BeginHorizontal();
+                        module.camera.tilt.tab = EditorGUILayout.Popup(module.camera.tilt.tab, new string[]{ "Move", "Jump", "Impact", "Crouch", "Slide", "Dash", "Mantle", "Wall Run", "Wall Stick", "Kick", "Grapple"});
+                        GUILayout.EndHorizontal();
+
+                        switch (module.camera.tilt.tab) 
+                        {
+                            case 0:
+                                module.camera.tilt.movementTiltHorizontal = EditorGUILayout.Slider("Move Tilt Multiplier (Horizontal)", module.camera.tilt.movementTiltHorizontal, 0, 1);
+                                module.camera.tilt.movementTiltVertical = EditorGUILayout.Slider("Move Tilt Multiplier (Vertical)", module.camera.tilt.movementTiltVertical, 0, 1);
+                                break;
+                            case 1:
+                                module.camera.tilt.jumpTiltHorizontal = EditorGUILayout.Slider("Jump Tilt Multiplier (Horizontal)", module.camera.tilt.jumpTiltHorizontal, 0, 1);
+                                module.camera.tilt.jumpTiltVertical = EditorGUILayout.Slider("Jump Tilt Multiplier (Vertical)", module.camera.tilt.jumpTiltVertical, 0, 1);
+                                break;
+                            case 2:
+                                module.camera.tilt.impactTiltHorizontal = EditorGUILayout.Slider("Impact Tilt Multiplier (Horizontal)", module.camera.tilt.impactTiltHorizontal, 0, 1);
+                                module.camera.tilt.impactTiltVertical = EditorGUILayout.Slider("Impact Tilt Multiplier (Vertical)", module.camera.tilt.impactTiltVertical, 0, 1);
+                                break;
+                            case 3:
+                                module.camera.tilt.crouchTiltHorizontal = EditorGUILayout.Slider("Crouch Tilt Multiplier (Horizontal)", module.camera.tilt.crouchTiltHorizontal, 0, 1);
+                                module.camera.tilt.crouchTiltVertical = EditorGUILayout.Slider("Crouch Tilt Multiplier (Vertical)", module.camera.tilt.crouchTiltVertical, 0, 1);
+                                break;
+                            case 4:
+                                module.camera.tilt.slideTilt = EditorGUILayout.Slider("Slide Tilt Multiplier", module.camera.tilt.slideTilt, 0, 1);
+                                module.camera.tilt.slideShakeAmount = EditorGUILayout.Slider("Slide Shake Multiplier", module.camera.tilt.slideShakeAmount, 0, 1);
+                                break;
+                            case 5:
+                                module.camera.tilt.dashTilt = EditorGUILayout.Slider("Dash Tilt Multiplier", module.camera.tilt.dashTilt, 0, 1);
+                                break;
+                            case 6:
+                                module.camera.tilt.mantleTiltHorizontal = EditorGUILayout.Slider("Mantle Tilt Multiplier (Horizontal)", module.camera.tilt.mantleTiltHorizontal, 0, 1);
+                                module.camera.tilt.mantleTiltVertical = EditorGUILayout.Slider("Mantle Tilt Multiplier (Vertical)", module.camera.tilt.mantleTiltVertical, 0, 1);
+                                break;
+                            case 7:
+                                module.camera.tilt.wallRunTiltHorizontal = EditorGUILayout.Slider("Wall Run Tilt Multiplier", module.camera.tilt.wallRunTiltHorizontal, 0, 1);
+                                break;
+                            case 8:
+                                module.camera.tilt.wallStickTilt = EditorGUILayout.Slider("Wall Stick Tilt Multiplier", module.camera.tilt.wallStickTilt, 0, 1);
+                                break;
+                            case 9:
+                                module.camera.tilt.kickTilt = EditorGUILayout.Slider("Kick Tilt Multiplier", module.camera.tilt.kickTilt, 0, 1);
+                                module.camera.tilt.kickShakeAmount = EditorGUILayout.Slider("Kick Shake Multiplier", module.camera.tilt.kickShakeAmount, 0, 1);
+                                module.camera.tilt.kickShakeSpeed = EditorGUILayout.FloatField("Kick Shake Speed", Mathf.Max(module.camera.tilt.kickShakeSpeed, 0));
+                                break;
+                            case 10:
+                                module.camera.tilt.grappleTilt = EditorGUILayout.Slider("Grapple Tilt Multiplier", module.camera.tilt.grappleTilt, 0, 1);
+                                break;
+                        }
+                        GUILayout.EndVertical();
+
+                        GUILayout.BeginVertical(EditorStyles.helpBox);
+                        GUILayout.Label("Noise");
+
+                        module.camera.tilt.enableNoise = EditorGUILayout.Toggle("Enable Noise", module.camera.tilt.enableNoise);
+
+                        if (module.camera.tilt.enableNoise)
+                        {
+                            module.camera.tilt.noiseMultiplier = EditorGUILayout.Slider("Noise Multiplier", module.camera.tilt.noiseMultiplier, 0, 1);
+                        }
+                        GUILayout.EndVertical();
+
+                        GUILayout.BeginVertical(EditorStyles.helpBox);
+                        GUILayout.Label("Headbob");
+
+                        GUILayout.BeginHorizontal();
+                        module.camera.tilt.enableHeadbob = EditorGUILayout.Toggle("Enable Headbob", module.camera.tilt.enableHeadbob);
+                        GUILayout.EndHorizontal();
+
+                        if (module.camera.tilt.enableHeadbob)
+                        {
+                            module.camera.tilt.bobFrequency = EditorGUILayout.FloatField("Frequency", Mathf.Max(module.camera.tilt.bobFrequency, 0));
+                            module.camera.tilt.horizontalBob = EditorGUILayout.Slider("Horizontal Bob", module.camera.tilt.horizontalBob, 0, 1);
+                            module.camera.tilt.verticalBob = EditorGUILayout.Slider("Vertical Bob", module.camera.tilt.verticalBob, 0, 1);
+                        }
+                        GUILayout.EndVertical();
+
+                        GUILayout.Space(5);
+                    }
+                    GUILayout.EndVertical();
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.headbob.verticalAmount = EditorGUILayout.Slider("Vertical Amount", module.headbob.verticalAmount, 0, 1);
+                    GUILayout.BeginVertical(EditorStyles.helpBox);
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(2 * margin);
+                    module.camera.dynamicFOV.foldout = EditorGUILayout.Foldout(module.camera.dynamicFOV.foldout, "Dynamic FOV", true);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    if (module.camera.dynamicFOV.foldout)
+                    {
+                        module.camera.dynamicFOV.enable = EditorGUILayout.Toggle("Enable Dynamic FOV", module.camera.dynamicFOV.enable);
+                        if (module.camera.dynamicFOV.enable) 
+                        {
+                            module.camera.dynamicFOV.multiplier = EditorGUILayout.Slider("FOV Multiplier", module.camera.dynamicFOV.multiplier, 1, 2);
+                            module.camera.dynamicFOV.speed = EditorGUILayout.FloatField("Max FOV Velocity", Mathf.Max(module.camera.dynamicFOV.speed, 0));
+                        }
+
+                        GUILayout.Space(5);
+                    }
+                    GUILayout.EndVertical();
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
-                    module.headbob.horizontalAmount = EditorGUILayout.Slider("Horizontal Amount", module.headbob.horizontalAmount, 0, 1);
+                    GUILayout.BeginVertical(EditorStyles.helpBox);
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(2 * margin); 
+                    EditorGUILayout.Foldout(false, "Lens", true);
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
-                    GUILayout.Space(5);
+                    GUILayout.EndVertical();
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+                    GUILayout.Space(margin);
                 }
             }
             GUI.enabled = true;
@@ -1604,6 +1881,8 @@ namespace Fujin.Editor
 
                     GUILayout.Space(5);
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     GUILayout.BeginVertical(EditorStyles.helpBox);
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(2 * margin);
@@ -1631,7 +1910,11 @@ namespace Fujin.Editor
                         GUILayout.Space(5);
                     }
                     GUILayout.EndVertical();
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     GUILayout.BeginVertical(EditorStyles.helpBox);
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(2 * margin);
@@ -1660,7 +1943,11 @@ namespace Fujin.Editor
                         GUILayout.Space(5);
                     }
                     GUILayout.EndVertical();
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     GUILayout.BeginVertical(EditorStyles.helpBox);
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(2 * margin);
@@ -1686,7 +1973,11 @@ namespace Fujin.Editor
                         GUILayout.Space(5);
                     }
                     GUILayout.EndVertical();
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     GUILayout.BeginVertical(EditorStyles.helpBox);
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(2 * margin);
@@ -1713,10 +2004,14 @@ namespace Fujin.Editor
                         GUILayout.Space(5);
                     }
                     GUILayout.EndVertical();
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     GUILayout.BeginVertical(EditorStyles.helpBox);
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(2 * margin);
+                    GUILayout.Space(2*margin);
                     module.sway.impactFoldout = EditorGUILayout.Foldout(module.sway.impactFoldout, "Impact Sway", true);
                     GUILayout.EndHorizontal();
 
@@ -1739,59 +2034,11 @@ namespace Fujin.Editor
                         GUILayout.Space(5);
                     }
                     GUILayout.EndVertical();
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
                 }
 
                 GUILayout.Space(5);
-            }
-            GUI.enabled = true;
-            GUILayout.EndVertical();
-        }
-
-        void DrawFOV()
-        {
-            GUILayout.BeginVertical(EditorStyles.helpBox);
-
-            GUILayout.BeginHorizontal();
-            module.fov.enable = EditorGUILayout.Toggle(module.fov.enable, GUILayout.Width(20));
-            module.fov.foldout = EditorGUILayout.Foldout(module.fov.foldout, "Dynamic FOV", true, "Label");
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-            GUI.enabled = module.fov.enable;
-
-            if (module.fov.foldout && module.fov.fadeAmount < 1)
-                module.fov.fadeAmount += fadeSpeed;
-            else if (!module.fov.foldout && module.fov.fadeAmount > 0)
-                module.fov.fadeAmount -= fadeSpeed;
-
-            module.fov.fadeAmount = Mathf.Clamp(module.fov.fadeAmount, 0, 1);
-
-            using (var group = new EditorGUILayout.FadeGroupScope(module.fov.fadeAmount))
-            {
-                if (group.visible)
-                {
-                    GUILayout.Space(5);
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.fov.multiplier = EditorGUILayout.Slider("FOV Multiplier", module.fov.multiplier, 1, 2);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.fov.speed = EditorGUILayout.FloatField("Transition Speed", Mathf.Max(module.fov.speed, 0));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    module.fov.minVelocity = EditorGUILayout.FloatField("Min, Max Velocity", Mathf.Max(module.fov.minVelocity, 0));
-                    module.fov.maxVelocity = EditorGUILayout.FloatField(Mathf.Max(module.fov.maxVelocity, 0), GUILayout.MinWidth(0));
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.Space(5);
-                }
             }
             GUI.enabled = true;
             GUILayout.EndVertical();
@@ -1920,6 +2167,12 @@ namespace Fujin.Editor
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
                     module.gravityMultiplier = EditorGUILayout.FloatField("Gravity", Mathf.Max(0, module.gravityMultiplier));
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    module.friction = EditorGUILayout.FloatField("Friction", Mathf.Max(0, module.friction));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 
@@ -2189,6 +2442,53 @@ namespace Fujin.Editor
                     GUI.enabled = module.useWallStickDuration;
                     module.wallStickDuration = EditorGUILayout.FloatField(Mathf.Max(module.wallStickDuration, 0));
                     GUI.enabled = true;
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.Space(5);
+                }
+            }
+
+            GUILayout.EndVertical();
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            module.layerFoldout = GUILayout.Toggle(module.layerFoldout, "Layers", EditorStyles.boldLabel);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            if (module.layerFoldout && module.layersFadeAmount < 1)
+                module.layersFadeAmount += fadeSpeed;
+            else if (!module.layerFoldout && module.layersFadeAmount > 0)
+                module.layersFadeAmount -= fadeSpeed;
+
+            module.layersFadeAmount = Mathf.Clamp(module.layersFadeAmount, 0, 1);
+
+            using (var group = new EditorGUILayout.FadeGroupScope(module.layersFadeAmount))
+            {
+                if (group.visible)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    EditorGUILayout.Popup("Ground", 0, new string[] { }); 
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    EditorGUILayout.Popup("Walls", 0, new string[] { }); 
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    EditorGUILayout.Popup("Grapple", 0, new string[] { }); 
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
+                    EditorGUILayout.Popup("Exclude", 0, new string[] { }); 
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 

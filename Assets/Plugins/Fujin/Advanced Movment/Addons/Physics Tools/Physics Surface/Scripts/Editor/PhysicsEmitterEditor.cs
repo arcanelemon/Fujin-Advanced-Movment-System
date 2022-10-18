@@ -28,31 +28,15 @@ namespace Fujin.Editor
             if (!initialized)
                 Init();
 
+            EditorUtility.SetDirty(emitter);
             GUILayout.Space(10);
 
             EditorGUI.BeginChangeCheck();
             GUILayout.BeginHorizontal();
             GUILayout.BeginVertical(EditorStyles.helpBox);
-
-            EditorGUILayout.LabelField("Shape", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Surface", EditorStyles.boldLabel);
             GUILayout.Space(5);
-            emitter.overrideMaterialColor = EditorGUILayout.Toggle("Override Surface Color", emitter.overrideMaterialColor);
-            emitter.color = EditorGUILayout.ColorField("Color", emitter.color);
-            emitter.material = (Material)EditorGUILayout.ObjectField("Material", emitter.material, typeof(Material), false);
-            GUILayout.BeginHorizontal();
-            emitter.fadeOnOverlap = EditorGUILayout.Toggle("Fade On Overlap", emitter.fadeOnOverlap);
-            GUI.enabled = emitter.fadeOnOverlap;
-            emitter.fadeOverlapAmount = EditorGUILayout.Slider(emitter.fadeOverlapAmount, 0, 1);
-            GUI.enabled = true;
-            GUILayout.EndHorizontal(); 
-            emitter.maxOverlaps = EditorGUILayout.IntSlider("Max Overlaps", emitter.maxOverlaps, 0, 10);
-            emitter.splashRadius = EditorGUILayout.Slider("Splash Radius", emitter.splashRadius, 0, 2); 
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(12);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("shapes"));
-            GUILayout.EndHorizontal();
-            emitter.surface = (GameObject)EditorGUILayout.ObjectField("Physics Surface", emitter.surface, typeof(GameObject), true);
-
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("collisionLayers"));
             GUILayout.Space(3);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
@@ -61,10 +45,35 @@ namespace Fujin.Editor
 
             GUILayout.BeginHorizontal();
             GUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Shape", EditorStyles.boldLabel);
+            GUILayout.Space(5);
+            emitter.decal = (Texture2D)EditorGUILayout.ObjectField("Decal", emitter.decal, typeof(Texture2D), false);
+            emitter.normal = (Texture2D)EditorGUILayout.ObjectField("Normal", emitter.normal, typeof(Texture2D), false);
+            GUILayout.Space(5);
+            emitter.color = EditorGUILayout.ColorField("Color", emitter.color);
+            emitter.metallicness = EditorGUILayout.Slider("Metallic", emitter.metallicness, 0, 1);
+            emitter.glossiness = EditorGUILayout.Slider("Glossiness", emitter.glossiness, 0, 1);
+            emitter.strength = EditorGUILayout.Slider("Strength", emitter.strength, 0, 1);
+            emitter.hardness = EditorGUILayout.Slider("Hardness", emitter.hardness, 0, 1);
+            emitter.radius = EditorGUILayout.Slider("Radius", emitter.radius, 0, 2);
+            GUILayout.BeginHorizontal();
+            emitter.fadeOverTime = EditorGUILayout.Toggle("Fade Over Time", emitter.fadeOverTime);
+            GUI.enabled = emitter.fadeOverTime;
+            emitter.fadeTime = EditorGUILayout.FloatField(Mathf.Max(emitter.fadeTime, 0));
+            GUILayout.EndHorizontal();
+            if (emitter.fadeOverTime)
+                emitter.fadeAmount = EditorGUILayout.Slider("Fade Amount", emitter.fadeAmount, 0, 1);
+            GUI.enabled = true;
+            GUILayout.Space(3);
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
 
-            EditorGUILayout.LabelField("Simulation", EditorStyles.boldLabel);
             GUILayout.Space(5);
 
+            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Simulation", EditorStyles.boldLabel);
+            GUILayout.Space(5);
             emitter.playOnAwake = EditorGUILayout.Toggle("Play On Awake", emitter.playOnAwake);
             emitter.loop = EditorGUILayout.Toggle("Loop", emitter.loop);
             emitter.simulateInWorldSpace = EditorGUILayout.Toggle("World Space", emitter.simulateInWorldSpace);
@@ -76,7 +85,6 @@ namespace Fujin.Editor
             emitter.rate = EditorGUILayout.FloatField("Rate", Mathf.Max(emitter.rate, 0));
             emitter.spread = EditorGUILayout.Slider("Spread", emitter.spread, 0, 1);
             emitter.offset = EditorGUILayout.FloatField("Offset", Mathf.Max(emitter.offset, 0));
-
             GUILayout.Space(3);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
@@ -91,6 +99,7 @@ namespace Fujin.Editor
                 emitter.Stop();
             GUI.enabled = true;
             GUILayout.EndHorizontal();
+            GUILayout.Space(5);
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -99,8 +108,6 @@ namespace Fujin.Editor
                 if (Application.isPlaying)
                     emitter.ForceUpdate();
             }
-
-            GUILayout.Space(5);
         }
 
         #endregion Engine

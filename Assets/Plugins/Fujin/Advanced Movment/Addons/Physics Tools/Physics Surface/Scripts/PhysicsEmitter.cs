@@ -1,4 +1,5 @@
 using UnityEngine;
+using DecalBrush = Fujin.Utils.DecalPainter.DecalBrush;
 
 namespace Fujin.Addons
 {
@@ -8,15 +9,19 @@ namespace Fujin.Addons
 
         // Config
 
-        public bool overrideMaterialColor;
+        public LayerMask collisionLayers;
+
         public Color color;
-        public Material material;
-        public bool fadeOnOverlap;
-        public float fadeOverlapAmount;
-        public int maxOverlaps;
-        public float splashRadius;
-        public Mesh[] shapes;
-        public GameObject surface;
+        public float metallicness;
+        public float glossiness;
+        public float radius;
+        public float strength;
+        public float hardness;
+        public bool fadeOverTime;
+        public float fadeTime;
+        public float fadeAmount;
+        public Texture2D decal;
+        public Texture2D normal;
 
         public bool playOnAwake;
         public bool loop;
@@ -37,6 +42,7 @@ namespace Fujin.Addons
         bool initialized;
         int i;
         float timer;
+        public DecalBrush brush;
 
         #endregion Variables
 
@@ -68,30 +74,10 @@ namespace Fujin.Addons
 
         void Init()
         {
-            if (!material)
-            {
-                Debug.LogError("[ERROR] Material cannot be NULL.");
-                return;
-            }
-            else if (shapes.Length == 0)
-            {
-                Debug.LogWarning("[Warning] Please assign mesh shapes before instantiation.");
-                return;
-            }
-            else if (!surface)
-            {
-                Debug.LogError("[ERROR] Surface cannot be NULL.");
-                return;
-            }
-            else if (!surface.GetComponent<PhysicsSurface>())
-            {
-                Debug.LogError("[ERROR] Surface requires component of type <FujinPhysicsSurface>.");
-                return;
-            }
-
             if (playOnAwake)
                 play = true;
 
+            brush = new DecalBrush(decal, color, radius, strength, hardness, metallicness, glossiness, normal);
             initialized = true;
         }
 
@@ -106,18 +92,8 @@ namespace Fujin.Addons
             emission.transform.parent = transform;
             emission.transform.localScale *= size;
 
-            emission.AddComponent<SphereCollider>().isTrigger = true;
-            emission.AddComponent<Rigidbody>().AddForce(force * 100 * transform.forward);
-            emission.AddComponent<MeshFilter>().sharedMesh = shapes[Random.Range(0, shapes.Length - 1)];
-
-            Renderer renderer = emission.AddComponent<MeshRenderer>();
-            renderer.material = material;
-            MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(propBlock);
-            propBlock.SetColor("_Color", color);
-            renderer.SetPropertyBlock(propBlock);
-
-            emission.AddComponent<PhysicsParticle>().Init(this);
+            emission.AddComponent<PhysicsParticle>().Init(this); 
+            emission.GetComponent<Rigidbody>().AddForce(force * 100 * transform.forward);
         }
 
         void Restart()

@@ -1,5 +1,7 @@
 using UnityEngine;
-using System.Collections;
+using UnityEngine.Events;
+using System.Collections.Generic;
+using Action = Fujin.Utils.Action;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -17,11 +19,227 @@ namespace Fujin.Movement
         public float acceleration;
         public float airSpeed;
         public float airAcceleration;
-        public float tiltAngle;
-        public float tiltSpeed;
+    }
 
-        public bool useAcceleration;
-        public bool useTilt;
+    [System.Serializable]
+    public class InteractModule : MotorModule
+    {
+        // Config
+        public float drawDistance;
+        public float drawRadius;
+        public Material highlightMaterial;
+        public LayerMask interactLayer;
+        public Action interactAction;
+
+        public bool enableHold;
+        public bool holdFoldout;
+        public float holdFadeAmount;
+        public float defaultHoldTime;
+        public Action holdAction;
+
+        public bool enablePickup;
+        public bool pickupFoldout;
+        public float pickupFadeAmount;
+        public LayerMask pickupLayer;
+        public float pickupForce;
+        public bool pickupCenterObjects;
+        public float pickupCenterDistance;
+        public bool pickupLimitSpeed;
+        public float maxPickupWeight;
+        public float throwForce;
+        public bool enableThrowCharge;
+        public float throwChargeTime;
+        public float throwGracePeriod;
+
+        // Instance
+        Collider focus;
+        Renderer focusRenderer;
+        Rigidbody focusRb;
+        bool pickup;
+        public bool isFocused => focus;
+        public bool isPickedUp => pickup;
+        public Rigidbody rigidbody => focusRb;
+        float holdProgress;
+        float throwProgress;
+
+        public void DrawGizmos(Vector3 origin, Vector3 direction)
+        {
+            Gizmos.color = Color.magenta;
+            Vector3 destination = origin + drawDistance * direction;
+            Gizmos.DrawWireSphere(destination, drawRadius);
+            Gizmos.DrawLine(origin, destination);
+        }
+
+        public float GetPickupMult() 
+        {
+            if (!pickupLimitSpeed)
+                return 1;
+
+            return Mathf.Clamp((rigidbody.mass / maxPickupWeight), 0 , 1);
+        }
+
+        public void Pickup() 
+        {
+            focusRb = focus.GetComponent<Rigidbody>();
+
+            if (!focusRb)
+                return;
+
+            focusRb.useGravity = false;
+            focusRb.freezeRotation = true;
+            pickup = true;
+        }
+
+        public void Release() 
+        {
+            focusRb.useGravity = true;
+            focusRb.freezeRotation = false;
+
+            focusRb = null;
+            pickup = false;
+            ResetThrow();
+        }
+
+        public bool IncrementThrowCharge()
+        {
+            if (!enableThrowCharge)
+                return true;
+
+            throwProgress += Time.deltaTime;
+            return GetThrowCharge() >= 1 + (throwGracePeriod / throwChargeTime);
+        }
+
+        public float GetThrowCharge() 
+        {
+            return throwProgress / (throwChargeTime + throwGracePeriod);
+        }
+
+        public float GetThrowMult() 
+        {
+            return enableThrowCharge ? GetThrowCharge() : 1;
+        }
+
+        public void Throw(Vector3 direction)
+        {
+            focusRb.velocity = Vector3.zero;
+            Rigidbody rb = focusRb;
+            focusRb.AddForce(throwForce * 10 * GetThrowMult() * direction);
+            Release();
+        }
+
+        public void ResetThrow() 
+        {
+            throwProgress = 0;
+        }
+
+        public void Fire()
+        {
+            interactAction.Invoke(focus.gameObject);
+            ResetHoldProgress();
+        }
+
+        public bool CheckHoldProgress()
+        {
+            if (enableHold)
+            {
+                if (GetHoldProgress() < 1.0f)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public void ResetHoldProgress()
+        {
+            holdProgress = 0;
+        }
+
+        public float GetHoldProgress()
+        {
+            float progress;
+            object o = holdAction.Invoke(focus.gameObject);
+            if (o == null)
+            {
+                // default timer
+                holdProgress += Time.deltaTime;
+                progress = holdProgress / defaultHoldTime;
+            } else
+                progress = (float)o;
+
+            return progress;
+        }
+
+        public void SetFocus(Collider focus)
+        {
+            int i = 0;
+            Material[] materials, newMaterials;
+
+            if (this.focus && highlightMaterial != null)
+            {
+                // remove material
+                materials = focusRenderer.materials;
+                newMaterials = new Material[materials.Length - 1];
+                foreach (Material m in materials)
+                {
+                    if (m.name.Replace(" (Instance)", "") != highlightMaterial.name)
+                    {
+                        newMaterials[i] = m;
+                        i++;
+                    }
+                }
+
+                focusRenderer.materials = newMaterials;
+            }
+
+            // new focus
+           this.focus = focus;
+
+            // add material
+            if (highlightMaterial != null)
+            {
+                i = 0;
+                focusRenderer = focus.GetComponent<Renderer>();
+                materials = focusRenderer.materials;
+                newMaterials = new Material[materials.Length + 1];
+                foreach (Material m in materials)
+                {
+                    newMaterials[i] = m;
+                    i++;
+                }
+                newMaterials[materials.Length] = highlightMaterial;
+                focusRenderer.materials = newMaterials;
+            }
+        }
+
+        public Collider GetFocus() 
+        {
+            return focus;
+        }
+
+        public void ClearFocus() 
+        {
+            // clear material
+            if (focus && highlightMaterial != null)
+            {
+                int i = 0;
+                Material[] materials = focusRenderer.materials;
+                Material[] newMaterials = new Material[materials.Length - 1];
+                foreach (Material m in materials)
+                {
+                    if (m.name.Replace(" (Instance)", "") != highlightMaterial.name)
+                    {
+                        newMaterials[i] = m;
+                        i++;
+                    }
+                }
+
+                focusRenderer.materials = newMaterials;
+                focusRenderer = null;
+            }
+
+            // remove focus
+            focus = null;
+        }
     }
 
     [System.Serializable]
@@ -29,20 +247,9 @@ namespace Fujin.Movement
     {
         public float force;
         public float gracePeriod;
-        public DirectionalJump directionalJump = new DirectionalJump();
         public DoubleJump doubleJump = new DoubleJump();
         public Hover hover = new Hover();
         public WallJump wallJump = new WallJump();
-
-        [System.Serializable]
-        public class DirectionalJump
-        {
-            public bool enable;
-            public bool foldout;
-            public float fadeAmount;
-            public float amount;
-            public Vector3 axis;
-        }
         
         [System.Serializable]
         public class DoubleJump
@@ -80,13 +287,11 @@ namespace Fujin.Movement
     public class SprintModule : MotorModule
     {
         public float speedMultiplier;
-        public bool hold;
     }
 
     [System.Serializable]
     public class CrouchModule : MotorModule
     {
-        public bool hold;
         public float height;
         public float speedMultiplier;
     }
@@ -97,15 +302,12 @@ namespace Fujin.Movement
         // Config
         public float height;
         public float boost;
-        public float boostDelay;
+        public float cooldown;
         public float slopeAcceleration;
         public float friction;
         public float frictionDelay;
-        public float tiltAngle;
-        public float tiltSpeed;
         public float control;
         public bool multidirectional;
-        public bool hold;
 
         // Instance
         public bool boosted;
@@ -117,8 +319,8 @@ namespace Fujin.Movement
     {
         public int count;
         public float force;
-        public float momentum;
         public float duration;
+        public float momentum;
         public float cooldownTime;
         public bool canDashInAir;
         public bool omnidirectional;
@@ -149,9 +351,13 @@ namespace Fujin.Movement
     [System.Serializable]
     public class ClimbModule : MotorModule
     {
+        // Config
         public float speed;
         public bool useDuration;
-        public float duration; 
+        public float duration;
+
+        // Instance
+        public Collider collider;
     }
 
     [System.Serializable]
@@ -160,6 +366,7 @@ namespace Fujin.Movement
         public float speed;
         public float accelaration;
         public float decelleration;
+        public float breakSpeed;
         public float boost;
         public float drag;
         public float minHeight;
@@ -168,12 +375,25 @@ namespace Fujin.Movement
 
         // Instance
         public bool decellerate;
+        public bool rotated;
+        public Collider collider;
+    }
+
+    [System.Serializable]
+    public class KickModule : MotorModule
+    {
+        public float force;
+        public float time;
+        public float resetTime;
+        public float speedMultiplier;
+        public float lookResistance;
+        public LayerMask kickLayer;
+        public Action action = new Action();
     }
 
     [System.Serializable]
     public class SlowwalkModule : MotorModule
     {
-        public bool hold;
         public float speedMultiplier;
     }
 
@@ -185,7 +405,6 @@ namespace Fujin.Movement
     [System.Serializable]
     public class LeanModule : MotorModule
     {
-        public bool hold;
         public float speed;
         public float angle;
         public float offset;
@@ -195,7 +414,6 @@ namespace Fujin.Movement
     [System.Serializable]
     public class FreelookModule : MotorModule
     {
-        public bool hold;
         public Vector2 axis;
         public float resetSpeed;
         public float horizontalAngle;
@@ -218,7 +436,6 @@ namespace Fujin.Movement
         public float maxAngle;
         public float viewControl;
         public float inputControl;
-        public float tilt;
         public float lookResistance;
         public float elasticity;
         public float cooldownTime;
@@ -249,21 +466,64 @@ namespace Fujin.Movement
     [System.Serializable]
     public class EffectsModule : MotorModule
     {
-        public Headbob headbob = new Headbob();
-        public Footsteps footsteps = new Footsteps();
+        public CameraFX camera = new CameraFX();
         public Sway sway = new Sway();
-        public FOV fov = new FOV();
+        public Footsteps footsteps = new Footsteps();
         public Speedlines speedlines = new Speedlines();
 
         [System.Serializable]
-        public class Headbob
+        public class CameraFX
         {
             public bool enable;
             public bool foldout;
             public float fadeAmount;
-            public float frequency;
-            public float verticalAmount;
-            public float horizontalAmount;
+            public Tilt tilt = new Tilt();
+            public DynamicFOV dynamicFOV = new DynamicFOV();
+
+            [System.Serializable]
+            public class Tilt 
+            {
+                // Editor
+                public bool foldout;
+                public int tab;
+
+                public float movementTiltVertical;
+                public float movementTiltHorizontal;
+                public float jumpTiltVertical;
+                public float jumpTiltHorizontal;
+                public float impactTiltVertical;
+                public float impactTiltHorizontal;
+                public float crouchTiltVertical;
+                public float crouchTiltHorizontal;
+                public float slideTilt;
+                public float slideShakeAmount;
+                public float dashTilt;
+                public float mantleTiltVertical;
+                public float mantleTiltHorizontal;
+                public float wallRunTiltHorizontal;
+                public float wallStickTilt;
+                public float kickTilt;
+                public float kickShakeAmount;
+                public float kickShakeSpeed;
+                public float grappleTilt;
+
+                public bool enableNoise;
+                public float noiseMultiplier;
+
+                public bool enableHeadbob;
+                public float bobFrequency;
+                public float verticalBob;
+                public float horizontalBob;
+            }
+
+            [System.Serializable]
+            public class DynamicFOV 
+            {
+                public bool enable;
+                public bool foldout;
+                public float multiplier;
+                public float speed;
+            }
         }
 
         [System.Serializable]
@@ -315,18 +575,6 @@ namespace Fujin.Movement
         }
 
         [System.Serializable]
-        public class FOV 
-        {
-            public bool enable;
-            public bool foldout;
-            public float fadeAmount;
-            public float multiplier;
-            public float speed;
-            public float minVelocity;
-            public float maxVelocity;
-        }
-
-        [System.Serializable]
         public class Speedlines
         {
             public bool enable;
@@ -361,6 +609,7 @@ namespace Fujin.Movement
         public float layersFadeAmount;
 
         public float gravityMultiplier;
+        public float friction;
         public bool limitVelocity;
         public Vector2 maxVelocity;
         public float airDrag;
@@ -386,15 +635,22 @@ namespace Fujin.Movement
 #if ENABLE_INPUT_SYSTEM
         public InputAction lookAction;
         public InputAction moveAction;
+        public InputAction interactAction;
         public InputAction jumpAction;
-        public InputAction sprintAction;
-        public InputAction crouchSlideAction;
+        public InputAction toggleSprintAction;
+        public InputAction holdSprintAction;
+        public InputAction toggleCrouchSlideAction;
+        public InputAction holdCrouchSlideAction;
         public InputAction dashAction;
         public InputAction poundAction;
+        public InputAction kickAction;
         public InputAction autorunAction;
-        public InputAction leanAction;
-        public InputAction freelookAction;
-        public InputAction slowwalkAction;
+        public InputAction toggleLeanAction;
+        public InputAction holdLeanAction;
+        public InputAction toggleFreelookAction;
+        public InputAction holdFreelookAction;
+        public InputAction toggleSlowwalkAction;
+        public InputAction holdSlowwalkAction;
         public InputAction grappleAction;
 #else
         public InputAxis lookAction;

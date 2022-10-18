@@ -6,7 +6,6 @@ using Supyrb;
 
 namespace Fujin.Editor
 {
-
     /// <summary>
     /// The custom editor used to draw a <code>FujinPlayerMotor</code> in the inspector
     /// </summary>
@@ -24,7 +23,7 @@ namespace Fujin.Editor
         Material mat;
         PlayerMotor motor;
         InputModule inputModule;
-        PhysicsModule physicModule;
+        InteractModule interactModule;
         JumpModule jumpModule;
         SprintModule sprintModule;
         CrouchModule crouchModule;
@@ -34,6 +33,7 @@ namespace Fujin.Editor
         MantleModule mantleModule;
         ClimbModule climbModule;
         WallrunModule wallrunModule;
+        KickModule kickModule;
         AutorunModule autorunModule;
         SlowwalkModule slowwalkModule;
         LeanModule leanModule;
@@ -44,6 +44,7 @@ namespace Fujin.Editor
         SerializedProperty inputProperty;
         SerializedProperty physicsProperty;
         SerializedProperty cameraContainer;
+        SerializedProperty interactProperty;
         SerializedProperty movementProperty;
         SerializedProperty jumpProperty;
         SerializedProperty sprintProperty;
@@ -54,6 +55,7 @@ namespace Fujin.Editor
         SerializedProperty mantleProperty;
         SerializedProperty climbProperty;
         SerializedProperty wallrunProperty;
+        SerializedProperty kickProperty;
         SerializedProperty autorunProperty;
         SerializedProperty slowwalkProperty;
         SerializedProperty leanProperty;
@@ -61,7 +63,6 @@ namespace Fujin.Editor
         SerializedProperty grappleProperty;
         SerializedProperty effectsProperty;
 
-        GUIStyle foldout;
         Texture2D backgroundTexture;
         Texture2D dropdownNormalTexture;
         Texture2D dropdownActiveTexture;
@@ -80,6 +81,7 @@ namespace Fujin.Editor
             inputProperty = serializedObject.FindProperty("input");
             physicsProperty = serializedObject.FindProperty("physics");
             cameraContainer = serializedObject.FindProperty("cameraContainer");
+            interactProperty = serializedObject.FindProperty("interact");
             movementProperty = serializedObject.FindProperty("movement");
             jumpProperty = serializedObject.FindProperty("jump");
             sprintProperty = serializedObject.FindProperty("sprint");
@@ -90,6 +92,7 @@ namespace Fujin.Editor
             mantleProperty = serializedObject.FindProperty("mantle");
             climbProperty = serializedObject.FindProperty("climb");
             wallrunProperty = serializedObject.FindProperty("wallrun");
+            kickProperty = serializedObject.FindProperty("kick");
             autorunProperty = serializedObject.FindProperty("autorun");
             slowwalkProperty = serializedObject.FindProperty("slowwalk");
             leanProperty = serializedObject.FindProperty("lean");
@@ -98,7 +101,7 @@ namespace Fujin.Editor
             effectsProperty = serializedObject.FindProperty("effects");
 
             inputModule = inputProperty.GetValue<InputModule>();
-            physicModule = physicsProperty.GetValue<PhysicsModule>();
+            interactModule = interactProperty.GetValue<InteractModule>();
             jumpModule = jumpProperty.GetValue<JumpModule>();
             sprintModule = sprintProperty.GetValue<SprintModule>();
             crouchModule = crouchProperty.GetValue<CrouchModule>();
@@ -108,6 +111,7 @@ namespace Fujin.Editor
             mantleModule = mantleProperty.GetValue<MantleModule>();
             climbModule = climbProperty.GetValue<ClimbModule>();
             wallrunModule = wallrunProperty.GetValue<WallrunModule>();
+            kickModule = kickProperty.GetValue<KickModule>();
             autorunModule = autorunProperty.GetValue<AutorunModule>();
             slowwalkModule = slowwalkProperty.GetValue<SlowwalkModule>();
             leanModule = leanProperty.GetValue<LeanModule>();
@@ -174,7 +178,7 @@ namespace Fujin.Editor
             GUI.DrawTexture(new Rect(rect.x, rect.y + 2.5f, rect.width, 24), backgroundTexture, ScaleMode.StretchToFill, true, 0, Color.white, 0, 3);
             GUI.DrawTexture(new Rect(rect.x + rect.width - 17.5f, rect.y + 5, 17.5f, 17.5f), value ? dropdownActiveTexture : dropdownNormalTexture);
             GUILayout.BeginHorizontal(EditorStyles.helpBox);
-            if (GUILayout.Button(label, foldout))
+            if (GUILayout.Button(label, "Label"))
                 value = !value;
             GUILayout.EndHorizontal();
 
@@ -196,11 +200,6 @@ namespace Fujin.Editor
         {
             motor = (PlayerMotor)target;
             initialized = true;
-
-            foldout = new GUIStyle("Button");
-            foldout.alignment = TextAnchor.MiddleLeft;
-            foldout.normal.background = EditorUtils.MakeTex(1, 1, Color.clear);
-            foldout.hover.background = EditorUtils.MakeTex(1, 1, new Color(1, 1, 1, .1f));
 
             greenIcon = Resources.Load("Fujin Res/Textures/green") as Texture2D;
             redIcon = Resources.Load("Fujin Res/Textures/red") as Texture2D;
@@ -269,6 +268,15 @@ namespace Fujin.Editor
                         GUILayout.Space(margin);
                         GUILayout.EndHorizontal();
 
+                        if (interactModule.enable)
+                        {
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Space(margin);
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("interactAction"));
+                            GUILayout.Space(margin);
+                            GUILayout.EndHorizontal();
+                        }
+
                         if (jumpModule.enable)
                         {
                             GUILayout.BeginHorizontal();
@@ -282,7 +290,13 @@ namespace Fujin.Editor
                         {
                             GUILayout.BeginHorizontal();
                             GUILayout.Space(margin);
-                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("sprintAction"));
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("toggleSprintAction"));
+                            GUILayout.Space(margin);
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Space(margin);
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("holdSprintAction"));
                             GUILayout.Space(margin);
                             GUILayout.EndHorizontal();
                         }
@@ -291,7 +305,13 @@ namespace Fujin.Editor
                         {
                             GUILayout.BeginHorizontal();
                             GUILayout.Space(margin);
-                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("crouchSlideAction"));
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("toggleCrouchSlideAction"));
+                            GUILayout.Space(margin);
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Space(margin);
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("holdCrouchSlideAction"));
                             GUILayout.Space(margin);
                             GUILayout.EndHorizontal();
                         }
@@ -314,6 +334,15 @@ namespace Fujin.Editor
                             GUILayout.EndHorizontal();
                         }
 
+                        if (kickModule.enable)
+                        {
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Space(margin);
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("kickAction"));
+                            GUILayout.Space(margin);
+                            GUILayout.EndHorizontal();
+                        }
+
                         if (autorunModule.enable)
                         {
                             GUILayout.BeginHorizontal();
@@ -327,7 +356,13 @@ namespace Fujin.Editor
                         {
                             GUILayout.BeginHorizontal();
                             GUILayout.Space(margin);
-                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("leanAction"));
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("toggleLeanAction"));
+                            GUILayout.Space(margin);
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Space(margin);
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("holdLeanAction"));
                             GUILayout.Space(margin);
                             GUILayout.EndHorizontal();
                         }
@@ -336,7 +371,13 @@ namespace Fujin.Editor
                         {
                             GUILayout.BeginHorizontal();
                             GUILayout.Space(margin);
-                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("freelookAction"));
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("toggleFreelookAction"));
+                            GUILayout.Space(margin);
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Space(margin);
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("holdFreelookAction"));
                             GUILayout.Space(margin);
                             GUILayout.EndHorizontal();
                         }
@@ -345,7 +386,13 @@ namespace Fujin.Editor
                         {
                             GUILayout.BeginHorizontal();
                             GUILayout.Space(margin);
-                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("slowwalkAction"));
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("toggleSlowwalkAction"));
+                            GUILayout.Space(margin);
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Space(margin);
+                            EditorGUILayout.PropertyField(inputProperty.FindPropertyRelative("holdSlowwalkAction"));
                             GUILayout.Space(margin);
                             GUILayout.EndHorizontal();
                         }
@@ -387,8 +434,8 @@ namespace Fujin.Editor
                     GUILayout.BeginVertical(EditorStyles.helpBox);
                     GUILayout.BeginHorizontal();
                     bool none = !jumpModule.enable && !sprintModule.enable && !crouchModule.enable && !dashModule.enable && !slideModule.enable
-                        && !poundModule.enable && !mantleModule.enable && !climbModule.enable && !wallrunModule.enable && !autorunModule.enable
-                        && !slowwalkModule.enable && !leanModule.enable && !freelookModule.enable && !grappleModule.enable && !effectsModule.enable;
+                        && !poundModule.enable && !mantleModule.enable && !climbModule.enable && !wallrunModule.enable && !interactModule.enable && !kickModule.enable
+                        && !autorunModule.enable && !slowwalkModule.enable && !leanModule.enable && !freelookModule.enable && !grappleModule.enable && !effectsModule.enable;
                     if (none)
                         GUI.contentColor = Color.red;
                     if (GUILayout.Toggle(none, "None", "Button"))
@@ -403,6 +450,8 @@ namespace Fujin.Editor
                         mantleModule.enable = false;
                         climbModule.enable = false;
                         wallrunModule.enable = false;
+                        interactModule.enable = false;
+                        kickModule.enable = false;
                         autorunModule.enable = false;
                         slowwalkModule.enable = false;
                         leanModule.enable = false;
@@ -414,8 +463,8 @@ namespace Fujin.Editor
                     GUI.contentColor = Color.white;
 
                     bool all = jumpModule.enable && sprintModule.enable && crouchModule.enable && dashModule.enable && slideModule.enable
-                        && poundModule.enable && mantleModule.enable && climbModule.enable && wallrunModule.enable && autorunModule.enable
-                        && slowwalkModule.enable && leanModule.enable && freelookModule.enable && grappleModule.enable && effectsModule.enable;
+                        && poundModule.enable && mantleModule.enable && climbModule.enable && wallrunModule.enable && interactModule.enable && kickModule.enable
+                        && autorunModule.enable && slowwalkModule.enable && leanModule.enable && freelookModule.enable && grappleModule.enable && effectsModule.enable;
                     if (all)
                         GUI.contentColor = Color.green;
                     if (GUILayout.Toggle(all, "All", "Button"))
@@ -430,6 +479,8 @@ namespace Fujin.Editor
                         mantleModule.enable = true;
                         climbModule.enable = true;
                         wallrunModule.enable = true;
+                        interactModule.enable = true;
+                        kickModule.enable = true;
                         autorunModule.enable = true;
                         slowwalkModule.enable = true;
                         leanModule.enable = true;
@@ -540,6 +591,22 @@ namespace Fujin.Editor
                             GUILayout.Space(margin);
                             GUILayout.BeginVertical(EditorStyles.helpBox);
                             GUILayout.BeginHorizontal();
+                            if (interactModule.enable)
+                                GUI.contentColor = Color.green;
+                            else
+                                GUI.contentColor = Color.white;
+                            interactModule.enable = GUILayout.Toggle(interactModule.enable, "Interact", "Button");
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
+                            if (kickModule.enable)
+                                GUI.contentColor = Color.green;
+                            else
+                                GUI.contentColor = Color.white;
+                            kickModule.enable = GUILayout.Toggle(kickModule.enable, "Kick", "Button");
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.BeginHorizontal();
                             if (autorunModule.enable)
                                 GUI.contentColor = Color.green;
                             else
@@ -615,16 +682,14 @@ namespace Fujin.Editor
                 {
                     GUILayout.BeginVertical(EditorStyles.helpBox);
                     GUILayout.Space(5);
-                    motor.tab = GUILayout.Toolbar(motor.tab, new string[] { "Config", "Physics", "Layers", "Components" });
+                    motor.tab = GUILayout.Toolbar(motor.tab, new string[] { "Config", "Physics", "Other" });
 
                     if (motor.tab == 0)
                         DrawModules();
                     else if (motor.tab == 1)
                         DrawPhysics();
                     else if (motor.tab == 2)
-                        DrawLayers();
-                    else if (motor.tab == 3)
-                        DrawComponents();
+                        DrawOther();
 
                     GUILayout.Space(5);
                     GUILayout.EndVertical();
@@ -640,6 +705,8 @@ namespace Fujin.Editor
         void DrawModules()
         {
             EditorGUILayout.PropertyField(movementProperty);
+            if (interactModule.enable)
+                EditorGUILayout.PropertyField(interactProperty);
             if (jumpModule.enable)
                 EditorGUILayout.PropertyField(jumpProperty);
             if (sprintModule.enable)
@@ -658,6 +725,8 @@ namespace Fujin.Editor
                 EditorGUILayout.PropertyField(climbProperty);
             if (wallrunModule.enable)
                 EditorGUILayout.PropertyField(wallrunProperty);
+            if (kickModule.enable)
+                EditorGUILayout.PropertyField(kickProperty);
             if (slowwalkModule.enable)
                 EditorGUILayout.PropertyField(slowwalkProperty);
             if (leanModule.enable)
@@ -679,41 +748,11 @@ namespace Fujin.Editor
             EditorGUILayout.PropertyField(physicsProperty);
         }
 
-        void DrawLayers()
-        {
-            GUILayout.BeginVertical(EditorStyles.helpBox);
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            EditorGUILayout.Popup("Ground", 0, new string[] { });
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            EditorGUILayout.Popup("Walls", 0, new string[] { });
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            EditorGUILayout.Popup("Interact", 0, new string[] { });
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(margin);
-            EditorGUILayout.Popup("Exclude", 0, new string[] { });
-            GUILayout.Space(margin);
-            GUILayout.EndHorizontal();
-            GUILayout.Space(5);
-            GUILayout.EndVertical();
-        }
-
         /// <summary>
         /// DrawComponents
         /// Draw miscellaneous configurable fields and components related to <code>FujinPlayerMotor</code>
         /// </summary>
-        void DrawComponents()
+        void DrawOther()
         {
             GUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -733,6 +772,12 @@ namespace Fujin.Editor
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            GUILayout.Label("Skeleton");
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
             GUILayout.Space(5);
             GUILayout.EndVertical();
             GUILayout.BeginVertical(EditorStyles.helpBox);
@@ -740,6 +785,12 @@ namespace Fujin.Editor
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
             GUILayout.Label("Animations", EditorStyles.boldLabel);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            GUILayout.Label("Override Controller");
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
@@ -924,6 +975,13 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
+                    EditorGUILayout.Toggle("On Step", motor.OnStep);
+                    EditorGUILayout.Toggle("On Wall", motor.OnWall);
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     EditorGUILayout.FloatField("Speed", motor.Velocity.magnitude);
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
@@ -931,13 +989,6 @@ namespace Fujin.Editor
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
                     EditorGUILayout.FloatField("Normal", motor.NormalAngle);
-                    GUILayout.Space(margin);
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(margin);
-                    EditorGUILayout.Toggle("On Step", motor.OnStep);
-                    EditorGUILayout.Toggle("On Wall", motor.OnWall);
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();
 

@@ -10,6 +10,20 @@ namespace Fujin.Utils
             return (to - from).normalized;
         }
 
+        public static void GenerateTriangles(bool doubleSided, Mesh mesh, params Vector3[][] faces) 
+        {
+            foreach (Vector3[] face in faces) 
+            {
+                if (face.Length != 3) 
+                {
+                    Debug.LogError("[ERROR] Faces require 3 vertex points. Yours had: " + face.Length);
+                    return;
+                }
+
+
+            }
+        }
+
         public static void GenerateRope(int sides, float thickness, Vector3[] vertices, Mesh mesh)
         {
             GenerateRope(sides, thickness, vertices, mesh, Vector2.one);
