@@ -8,6 +8,8 @@ namespace Fujin.Editor
     /// </summary>
     public class EditorUtils
     {
+        public static float MARGIN = 5;
+
         /// <summary>
         /// MakeTex
         /// Generates a <code>Texture2D</code> from the provided params
