@@ -1697,7 +1697,7 @@ namespace Fujin.Movement
                 smoothing *= wallrun.accelaration;
             }
             
-            speed = Mathf.Lerp(speed, targetSpeed, smoothing);
+            speed = Mathf.Lerp(speed * Mathf.Sign(Vector3.Dot(rb.velocity.normalized, wallDirection)), targetSpeed, smoothing);
             velocity += speed * wallDirection;
 
             #endregion Calculate
