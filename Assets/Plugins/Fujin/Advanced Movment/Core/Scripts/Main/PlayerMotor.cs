@@ -134,7 +134,6 @@ namespace Fujin.Movement
         float defaultHeight;
         float heightSmoothing = 5;
         float defaultFOV;
-        float tiltRotation;
         float leanDirection;
         int groundLayer;
 
@@ -1093,6 +1092,20 @@ namespace Fujin.Movement
             float force = jump.force;
             Vector3 direction = Vector3.up;
 
+            #region State Control
+
+            // Calculate jump direction from movement state
+            if (movementState == MovementState.Mantling || movementState == MovementState.Dashing)
+                return;
+
+            else if (movementState == MovementState.Crouching)
+                Stand();
+
+            else if (movementState == MovementState.Pounding || movementState == MovementState.Grappling)
+                ResetMovement();
+
+            #endregion State Control
+
             #region Double Jump & Wall Jump
 
             //  Double jump if not grounded and enabled
@@ -1119,7 +1132,7 @@ namespace Fujin.Movement
                     
                     float dot = Vector3.Dot(velocity.normalized, input);
                     float facing = Mathf.Min(2 - (dot + 1), 1);
-                    Vector3 inputVelocity = velocity.magnitude * (input - Mathf.Max(dot, 0) * velocity.normalized);
+                    Vector3 inputVelocity = jump.doubleJump.force * (input - Mathf.Max(dot, 0) * velocity.normalized);
                     Vector3 counterVelocity = jump.doubleJump.redirect * facing * velocity;
                     rb.velocity += inputVelocity - counterVelocity;
                 }
@@ -1135,26 +1148,12 @@ namespace Fujin.Movement
                     
                 }
 
+                // animate camera
                 DipTilt(effects.camera.tilt.jumpTiltVertical);
                 RollTilt(effects.camera.tilt.jumpTiltHorizontal);
             }
 
             #endregion Double Jump & Wall Jump
-
-            #region State Control
-
-            // Calculate jump direction from movement state
-            if (movementState == MovementState.Mantling || movementState == MovementState.Dashing)
-                return;
-
-            else if (movementState == MovementState.Crouching)
-                Stand();
-            
-            else if (movementState == MovementState.Pounding || movementState == MovementState.Grappling)
-                ResetMovement();
-
-
-            #endregion State Control
 
             #region Apply Force
 
@@ -1623,17 +1622,24 @@ namespace Fujin.Movement
             else
                 wallRunBreakTimer = 0;
 
+            // timer up
+            if (wallRunBreakTimer >= 1) 
+            {
+                ExitWallRun();
+                return;
+            }
+
             // grounded, decellerated, blocked, moving away, or look angle
-            if (grounded || 
-                ((wallrun.decellerate && speed < wallrun.breakSpeed) || 
-                wallRunBreakTimer >= 1 || Vector3.Dot(moveInputs.x * transform.right, wallNormal) > 0))
+            else if (grounded || 
+                ((wallrun.decellerate && speed < wallrun.breakSpeed)
+                || Vector3.Dot(moveInputs.x * transform.right, wallNormal) > 0))
             {
                 LeaveWall();
                 return;
             }
 
             // not on wall
-            if (!onWall)
+            else if (!onWall)
             {
                 Vector3 origin = transform.position + cameraOffset.y * Vector3.up;
                 if (!Physics.Raycast(origin, -wallNormal, out RaycastHit hit, 1,  collisionExclusionMask, QueryTriggerInteraction.Ignore)) 
@@ -2295,7 +2301,6 @@ namespace Fujin.Movement
                     Vector3 targetRotation = cameraContainer.localEulerAngles;
                     targetRotation.z = lean.angle * -leanDirection;
                     cameraContainer.localRotation = Quaternion.Lerp(cameraContainer.localRotation, Quaternion.Euler(targetRotation), lean.speed * d);
-                    tiltRotation = cameraContainer.localEulerAngles.z;
 
                     Vector3 targetPosition = cameraContainer.localPosition;
                     cameraOffset.x = Mathf.Lerp(cameraOffset.x, lean.offset * leanDirection, lean.speed * d);
