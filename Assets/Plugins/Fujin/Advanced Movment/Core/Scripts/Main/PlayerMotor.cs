@@ -1161,9 +1161,6 @@ namespace Fujin.Movement
             rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
             rb.AddForce(direction.normalized * force * Mathf.Max(speedMultiplier, 0.5f), ForceMode.Impulse);
 
-            if (grounded)
-                StartYieldJumpGraceCoroutine();
-
             #endregion Apply Force
         }
 
@@ -2499,6 +2496,10 @@ namespace Fujin.Movement
                     EndPound();
                 else if (movementState == MovementState.Hovering)
                     StopJumpHoverCoroutine();
+            } else if (!grounded && this.grounded)
+            {
+                if (jump.enable)
+                    StartYieldJumpGraceCoroutine();
             }
 
             this.grounded = grounded;
