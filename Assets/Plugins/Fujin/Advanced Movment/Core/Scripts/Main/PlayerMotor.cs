@@ -76,6 +76,8 @@ namespace Fujin.Movement
 
         [SerializeField]
         Transform cameraContainer;
+        [SerializeField]
+        Camera baseCamera;
 
         #endregion Components
 
@@ -148,7 +150,6 @@ namespace Fujin.Movement
         Collider wallCollider;
         ParticleSystem.EmissionModule speedLinesEmission;
         CapsuleCollider col;
-        Camera cam;
         Rigidbody rb;
 
         #endregion Instance
@@ -161,8 +162,9 @@ namespace Fujin.Movement
         #region New Input
         void OnLookChange(InputAction.CallbackContext context)
         {
-            lookInputs = context.ReadValue<Vector2>()
-                * (input.lookSensitivity - (input.lookSensitivity * lookResistance)) * 10 * d;
+            mouseDelta = context.ReadValue<Vector2>()
+                * (input.lookSensitivity - (input.lookSensitivity * lookResistance)) * d;
+
             Look();
         }
 
@@ -200,7 +202,7 @@ namespace Fujin.Movement
                     float mult = interact.GetPickupMult();
                     speedMultiplier += mult;
                     lookResistance += mult;
-                    interact.Throw(cam.transform.forward);
+                    interact.Throw(baseCamera.transform.forward);
                 }
 
                 interact.ResetHoldProgress();
@@ -614,7 +616,7 @@ namespace Fujin.Movement
         /// HandleInput
         /// Controls the active state of the current input system
         /// </summary>
-        void HandleInput()
+        void CheckInput()
         {
 #if ENABLE_INPUT_SYSTEM
             if (!input.enable && enable)
@@ -675,7 +677,6 @@ namespace Fujin.Movement
 
             // Initilize Variables
             col = GetComponent<CapsuleCollider>();
-            cam = GetComponentInChildren<Camera>();
             rb = GetComponent<Rigidbody>();
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.freezeRotation = true;
@@ -688,7 +689,7 @@ namespace Fujin.Movement
             heightOffset = col.height * 2 / defaultHeight;
             targetHeight = defaultHeight;
             cameraOffset.y = defaultHeight;
-            defaultFOV = cam.fieldOfView;
+            defaultFOV = baseCamera.fieldOfView;
             collisionExclusionMask = ~LayerMask.GetMask("Player");
             rb.useGravity = false;
 
@@ -710,7 +711,7 @@ namespace Fujin.Movement
                         return;
                     }
 
-                    ParticleSystem p = Instantiate(effects.speedlines.prefab, cam.transform).GetComponent<ParticleSystem>();
+                    ParticleSystem p = Instantiate(effects.speedlines.prefab, baseCamera.transform).GetComponent<ParticleSystem>();
                     p.transform.localPosition = Vector3.forward;
                     speedLinesEmission = p.emission;
                     var m = p.main;
@@ -732,15 +733,6 @@ namespace Fujin.Movement
             }
         }
 
-
-        /// <summary>
-        /// [ENGINE]
-        /// </summary>
-        void Update()
-        {
-            HandleInput();
-        }
-
         /// <summary>
         /// [ENGINE]
         /// </summary>
@@ -749,16 +741,18 @@ namespace Fujin.Movement
             t = Time.time;
             d = Time.deltaTime;
 
+            CheckInput();
             CheckFocus();
-            HandleCollisions();
-            HandleEffects();
-            HandleMovementStates();
+            CheckCollisions();
+
             HandleInputQueue();
+            HandleMovementStates();
+
             HandleCamera();
-            HandleOther();
+            HandleEffects();
             CounterPhysics();
 
-            lookInputs = Vector2.zero;
+            mouseDelta = Vector2.zero;
             previousVelocity = rb.velocity;
             previousPosition = rb.position;
         }
@@ -802,7 +796,7 @@ namespace Fujin.Movement
 
             // Interact
             if (interact.enable)
-                interact.DrawGizmos(cam.transform.position, cam.transform.forward);
+                interact.DrawGizmos(baseCamera.transform.position, baseCamera.transform.forward);
 
             // Step Check
             if (OnStep)
@@ -862,8 +856,9 @@ namespace Fujin.Movement
 
         float lookResistance;
 
-        Vector2 lookInputs;
         Vector2 lookOffset;
+        Vector2 mouseDelta;
+        Vector2 mousePosition;
 
         /// <summary>
         /// Look
@@ -874,45 +869,26 @@ namespace Fujin.Movement
             if (blockLook)
                 return;
 
-            if (freelook.enable)
+            if (freeLookInput)
             {
-                if (freeLookInput)
-                {
-                    //lookOffset.y -= lookInputs.y * input.lookAxis.y * freelook.axis.y;
-                    //lookOffset.x += lookInputs.x * input.lookAxis.x * freelook.axis.x;
-                    //float y = Mathf.Clamp(yRot + lookOffset.y, -freelook.verticalAngle, freelook.verticalAngle);
-                    //float x = Mathf.Clamp(lookOffset.x, -freelook.horizontalAngle, freelook.horizontalAngle);
-                    //lookOffset.y = y - yRot;
-                    //lookOffset.x = x;
-                    //cam.transform.localRotation = Quaternion.Euler(y, x, cameraContainer.localEulerAngles.z);
-                }
-                else
-                {
-                    // y rotation
-                    float localX = (cameraContainer.localEulerAngles.x > 180) ? cameraContainer.localEulerAngles.x - 360f : cameraContainer.localEulerAngles.x;
-                    float yRot = localX + lookInputs.y * -input.lookAxis.y;
-                    yRot = Mathf.LerpAngle(localX, yRot, 10 * d);
-                    yRot = Mathf.Clamp(yRot, -90, 90);
-                    cameraContainer.localRotation = Quaternion.Euler(yRot + lookOffset.y, lookOffset.x, cameraContainer.localEulerAngles.z);
-
-                    // x rotation
-                    float xRot = rb.rotation.eulerAngles.y + lookInputs.x * input.lookAxis.x;
-                    xRot = Mathf.LerpAngle(rb.rotation.eulerAngles.y, xRot, 10 * d);
-                    rb.MoveRotation(Quaternion.Euler(0, xRot, 0));
-                }
+                //lookOffset.y -= lookInputs.y * input.lookAxis.y * freelook.axis.y;
+                //lookOffset.x += lookInputs.x * input.lookAxis.x * freelook.axis.x;
+                //float y = Mathf.Clamp(yRot + lookOffset.y, -freelook.verticalAngle, freelook.verticalAngle);
+                //float x = Mathf.Clamp(lookOffset.x, -freelook.horizontalAngle, freelook.horizontalAngle);
+                //lookOffset.y = y - yRot;
+                //lookOffset.x = x;
+                //cam.transform.localRotation = Quaternion.Euler(y, x, cameraContainer.localEulerAngles.z);
             }
             else
             {
                 // y rotation
                 float localX = (cameraContainer.localEulerAngles.x > 180) ? cameraContainer.localEulerAngles.x - 360f : cameraContainer.localEulerAngles.x;
-                float yRot = localX + lookInputs.y * -input.lookAxis.y;
-                yRot = Mathf.LerpAngle(localX, yRot, 10 * d);
+                float yRot = localX + mouseDelta.y * -input.lookAxis.y;
                 yRot = Mathf.Clamp(yRot, -90, 90);
                 cameraContainer.localRotation = Quaternion.Euler(yRot + lookOffset.y, lookOffset.x, cameraContainer.localEulerAngles.z);
 
                 // x rotation
-                float xRot = rb.rotation.eulerAngles.y + lookInputs.x * input.lookAxis.x;
-                xRot = Mathf.LerpAngle(rb.rotation.eulerAngles.y, xRot, 10 * d);
+                float xRot = rb.rotation.eulerAngles.y + mouseDelta.x * input.lookAxis.x;
                 rb.MoveRotation(Quaternion.Euler(0, xRot, 0));
             }
         }
@@ -992,6 +968,7 @@ namespace Fujin.Movement
 
         bool interactInput;
         bool throwInput;
+        Quaternion pickupOffset;
 
         void Interact()
         {
@@ -1002,6 +979,8 @@ namespace Fujin.Movement
                     if (!interact.isPickedUp)
                     {
                         interact.Pickup();
+                        pickupOffset = Quaternion.Inverse(baseCamera.transform.rotation) * interact.rigidbody.rotation;
+                        Debug.Log(pickupOffset.eulerAngles);
                         if (interact.rigidbody)
                         {
                             float mult = interact.GetPickupMult();
@@ -1024,8 +1003,8 @@ namespace Fujin.Movement
 
             RaycastHit hit;
             bool interactable;
-            Vector3 origin = cam.transform.position + cam.transform.forward;
-            Vector3 direction = cam.transform.forward;
+            Vector3 origin = baseCamera.transform.position + baseCamera.transform.forward;
+            Vector3 direction = baseCamera.transform.forward;
             if (interact.drawRadius > 0)
                 interactable = Physics.SphereCast(origin, interact.drawRadius, direction, out hit, interact.drawDistance, interact.interactLayer) ||
                     Physics.SphereCast(origin, interact.drawRadius, direction, out hit, interact.drawDistance, interact.pickupLayer);
@@ -1049,7 +1028,7 @@ namespace Fujin.Movement
                     interact.ClearFocus();
                 else 
                 {
-                    if (Vector3.Distance(interact.rigidbody.position, cam.transform.position + cam.transform.forward) > interact.drawDistance)
+                    if (Vector3.Distance(interact.rigidbody.position, baseCamera.transform.position + baseCamera.transform.forward) > interact.drawDistance)
                     {
                         float mult = interact.GetPickupMult();
                         speedMultiplier += mult;
@@ -1078,7 +1057,7 @@ namespace Fujin.Movement
             // Move towards pickup to center
             if (interact.pickupCenterObjects)
             {
-                Vector3 targetPosition = cam.transform.position + (1 + interact.pickupCenterDistance) * cam.transform.forward;
+                Vector3 targetPosition = baseCamera.transform.position + (1 + interact.pickupCenterDistance) * baseCamera.transform.forward;
                 float distance = Vector3.Distance(interact.rigidbody.position, targetPosition);
                 if (distance < 1)
                     force *= distance;
@@ -1089,10 +1068,11 @@ namespace Fujin.Movement
             // Move based on input
             else
             {
-                direction = (lookInputs.x * cam.transform.right + lookInputs.y * cam.transform.up).normalized;
+                direction = (mouseDelta.x * baseCamera.transform.right + mouseDelta.y * baseCamera.transform.up).normalized;
             }
 
-            interact.rigidbody.velocity = force * direction;
+            interact.rigidbody.velocity = force * direction; 
+            interact.rigidbody.rotation = Quaternion.Lerp(interact.rigidbody.rotation, baseCamera.transform.rotation * pickupOffset, 5 * d);
         }
 
         #endregion Interact
@@ -1139,7 +1119,7 @@ namespace Fujin.Movement
                     
                     float dot = Vector3.Dot(velocity.normalized, input);
                     float facing = Mathf.Min(2 - (dot + 1), 1);
-                    Vector3 inputVelocity = currSpeed * facing * (input - Mathf.Max(dot, 0) * velocity.normalized).normalized;
+                    Vector3 inputVelocity = velocity.magnitude * (input - Mathf.Max(dot, 0) * velocity.normalized);
                     Vector3 counterVelocity = jump.doubleJump.redirect * facing * velocity;
                     rb.velocity += inputVelocity - counterVelocity;
                 }
@@ -1260,10 +1240,13 @@ namespace Fujin.Movement
         {
             standing = false;
             targetHeight = slide.height;
-            slideDirection = Vector3.ProjectOnPlane(direction, normal).normalized;
-            rb.AddForce(slideDirection * (slide.boosted ? 0 : slide.boost), ForceMode.Impulse);
             movementState = MovementState.Sliding;
-            StartSlideCooldownCoroutine();
+            if (!slide.boosted)
+            {
+                slideDirection = Vector3.ProjectOnPlane(direction, normal).normalized;
+                rb.AddForce(slideDirection *slide.boost, ForceMode.Impulse);
+                StartSlideCooldownCoroutine();
+            }
             StartSlideFrictionCoroutine();
         }
 
@@ -1295,7 +1278,7 @@ namespace Fujin.Movement
             // Slide down slopes 
             if (normalAngle > 0)
             {
-                ProjectDownSlope(Mathf.Min(normalAngle / physics.slopeAngle, 1) * slide.slopeAcceleration * 100);
+                ProjectDownSlope((normalAngle / 90) * slide.slopeAcceleration * 100);
             }
 
             // If force is decellarating and less than threshold, stop
@@ -1330,7 +1313,7 @@ namespace Fujin.Movement
 
             if (dash.omnidirectional)
             {
-                direction = cam.transform.forward;
+                direction = baseCamera.transform.forward;
             }
             else
             {
@@ -1645,7 +1628,7 @@ namespace Fujin.Movement
                 ((wallrun.decellerate && speed < wallrun.breakSpeed) || 
                 wallRunBreakTimer >= 1 || Vector3.Dot(moveInputs.x * transform.right, wallNormal) > 0))
             {
-                ExitWallRun();
+                LeaveWall();
                 return;
             }
 
@@ -1656,15 +1639,17 @@ namespace Fujin.Movement
                 if (!Physics.Raycast(origin, -wallNormal, out RaycastHit hit, 1,  collisionExclusionMask, QueryTriggerInteraction.Ignore)) 
                 {
                     // not on wall or wall angle too steep
-                    ExitWallRun();
+                    LeaveWall();
                     return;
                 }
 
                 // change wall normal
-                blockLook = true;
                 wallNormal = hit.normal;
-                wallrun.rotated = false;
+                onWall = true;
                 velocity = Vector3.ProjectOnPlane(velocity, wallNormal);
+
+                // set position against wall (the player has over shot wall detection)
+                transform.position = hit.point + collisionDrawOffset * wallNormal - Vector3.up * cameraOffset.y;
             }
 
             #endregion End Conditions
@@ -1675,15 +1660,11 @@ namespace Fujin.Movement
             float smoothing = 10 * d;
             float inputDot = Vector3.Dot(transform.TransformDirection(new Vector3(moveInputs.x, 0, moveInputs.y).normalized), wallDirection);
 
-            if (wallrun.decelleration > 0) {
-                if (wallrun.decellerate && inputDot > 0.5f)
-                    wallrun.decellerate = false;
-                else if (!wallrun.decellerate && (wallrun.speed - speed) < wallrun.accelaration)
-                    wallrun.decellerate = true;
-            }
+            if (!wallrun.decellerate && (wallrun.speed - speed) < wallrun.accelaration)
+                wallrun.decellerate = true;
 
             // decelerate
-            if (wallrun.decellerate) 
+            if (wallrun.decellerate && inputDot < 0.5f) 
             {
                 if (inputDot < -0.5f)
                     smoothing *= 2;
@@ -1699,6 +1680,7 @@ namespace Fujin.Movement
             
             speed = Mathf.Lerp(speed, targetSpeed, smoothing);
             velocity += speed * wallDirection;
+            velocity.y = Mathf.Lerp(velocity.y, 0, 5 * d);
 
             #endregion Calculate
 
@@ -1714,7 +1696,7 @@ namespace Fujin.Movement
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 5 * d);
                 if (Quaternion.Angle(transform.rotation, targetRotation) <= 5f)
                 { 
-                    if (lookInputs.magnitude > 0.2f) 
+                    if (mouseDelta.magnitude > 0.2f) 
                     {
                         blockLook = false;
                         wallrun.rotated = true;
@@ -1732,7 +1714,7 @@ namespace Fujin.Movement
                 numJumps = jump.doubleJump.amount;
 
             // redirect horizontal velocity and add boost impulse
-            Vector3 velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+            Vector3 velocity = new Vector3(rb.velocity.x, Mathf.Max(rb.velocity.y, 0), rb.velocity.z);
             float speed = velocity.magnitude;
             speed += wallrun.boost;
             rb.velocity = Vector3.ProjectOnPlane(speed * velocity.normalized, wallNormal);
@@ -1748,7 +1730,14 @@ namespace Fujin.Movement
             wallrun.rotated = false;
             wallRunBreakTimer = 0;
             blockLook = false;
+
             ResetMovement();
+        }
+
+        void LeaveWall() 
+        {
+            rb.AddForce(wallrun.pushForce * wallNormal, ForceMode.Impulse);
+            ExitWallRun();
         }
 
         #endregion Wall Run
@@ -1760,7 +1749,7 @@ namespace Fujin.Movement
             if (movementState != MovementState.Kicking)
                 return;
             
-            Collider[] cols = Physics.OverlapSphere(cam.transform.position + cam.transform.forward, 1, collisionExclusionMask, QueryTriggerInteraction.Ignore);
+            Collider[] cols = Physics.OverlapSphere(baseCamera.transform.position + baseCamera.transform.forward, 1, collisionExclusionMask, QueryTriggerInteraction.Ignore);
             foreach(Collider col in cols) 
             {
                 if (kick.kickLayer != (kick.kickLayer | (1 << col.gameObject.layer)))
@@ -1769,7 +1758,7 @@ namespace Fujin.Movement
                 kick.action.Invoke(col.gameObject);
                 Rigidbody colRb = col.GetComponent<Rigidbody>();
                 if (colRb)
-                    colRb.AddForce(kick.force * 100 * cam.transform.forward);
+                    colRb.AddForce(kick.force * 100 * baseCamera.transform.forward);
             }
 
             if (grounded)
@@ -1854,7 +1843,7 @@ namespace Fujin.Movement
         void StartThrowGrapple()
         {
             grappleObj = Instantiate(grapple.prefab, grapple.pivot.position, grapple.pivot.rotation);
-            grapplePoint = cam.transform.position + grapple.range * cam.transform.forward;
+            grapplePoint = baseCamera.transform.position + grapple.range * baseCamera.transform.forward;
             grappleMesh = grappleObj.GetComponent<MeshFilter>().mesh;
             throwGrapple = true;
         }
@@ -1904,7 +1893,7 @@ namespace Fujin.Movement
             if (speed > grapple.speed) 
             {
                 float angle =
-                        Vector3.Angle((grapple.pivot.position + cam.transform.forward).normalized, grappleObj.transform.position);
+                        Vector3.Angle((grapple.pivot.position + baseCamera.transform.forward).normalized, grappleObj.transform.position);
 
                 float clamp = grapple.speed;
                 if (angle < 90) 
@@ -1932,7 +1921,7 @@ namespace Fujin.Movement
         /// </summary>
         void Grapple()
         {
-            float distance = Vector3.Distance(grapplePoint, cam.transform.position);
+            float distance = Vector3.Distance(grapplePoint, baseCamera.transform.position);
             Vector3 targetDirection = (grapplePoint - grapple.pivot.position).normalized;
 
             #region Wrap
@@ -1985,7 +1974,7 @@ namespace Fujin.Movement
             // Grapple Physics
 
             // direction
-            Vector3 counterDirection = (cam.transform.forward * grapple.viewControl) + ((transform.right * moveInputs.x) * grapple.inputControl);
+            Vector3 counterDirection = (baseCamera.transform.forward * grapple.viewControl) + ((transform.right * moveInputs.x) * grapple.inputControl);
             Vector3 direction = (targetDirection + counterDirection).normalized;
 
             // elasticity
@@ -2018,11 +2007,11 @@ namespace Fujin.Movement
             else
                 grappleBreakTimer = 0;
 
-            float angle = Vector3.Angle(targetDirection, cam.transform.forward);
+            float angle = Vector3.Angle(targetDirection, baseCamera.transform.forward);
             if (angle > 180)
                 angle -= 180;
 
-            distance = Vector3.Distance(grappleObj.transform.position, cam.transform.position);
+            distance = Vector3.Distance(grappleObj.transform.position, baseCamera.transform.position);
             if (grappleBreakTimer > 1f || angle > grapple.maxAngle 
                 || distance < 1f || distance > grapple.range + 1f)// ||
                 //grapplelineRenderer.positionCount > grapple.wrapCount + 2)
@@ -2042,7 +2031,7 @@ namespace Fujin.Movement
         void CheckGrapple()
         {
             RaycastHit hit;
-            Vector3 castOrigin = cam.transform.position;
+            Vector3 castOrigin = baseCamera.transform.position;
             Vector3 direction = grappleObj.transform.position - castOrigin;
             float distance = Vector3.Distance(castOrigin, grappleObj.transform.position);
             if (Physics.Raycast(castOrigin, direction, out hit, distance, collisionExclusionMask, QueryTriggerInteraction.Ignore))
@@ -2259,10 +2248,9 @@ namespace Fujin.Movement
             }
 
             #endregion Movement States
-        }
 
-        void HandleOther()
-        {
+            #region Additional Movement
+
             // SPRINTING
             // Note: this is a 'core' state, however sprintInput has to be kept track over multiple states.
             // we handle this below.
@@ -2271,9 +2259,9 @@ namespace Fujin.Movement
                 Sprint();
 
             // SLOW WALK
-            if (slowwalk.enable && slowWalkInput) 
+            if (slowwalk.enable && slowWalkInput)
                 speedMultiplier *= slowwalk.speedMultiplier;
-                
+
             // LEANING
             if (lean.enable && (leanInput || leanDirection == 0))
             {
@@ -2286,8 +2274,8 @@ namespace Fujin.Movement
                 {
                     if (leanDirection != 0)
                     {
-                        
-                        if (slowWalkInput) 
+
+                        if (slowWalkInput)
                         {
                             if (movementState == MovementState.Default)
                                 currSpeed = movement.speed * lean.speedMultiplier * slowwalk.speedMultiplier;
@@ -2295,7 +2283,7 @@ namespace Fujin.Movement
                                 currSpeed = movement.speed * crouch.speedMultiplier * lean.speedMultiplier * slowwalk.speedMultiplier;
                         }
 
-                        else 
+                        else
                         {
                             if (movementState == MovementState.Default)
                                 currSpeed = movement.speed * lean.speedMultiplier;
@@ -2325,7 +2313,7 @@ namespace Fujin.Movement
                         lookOffset = Vector2.zero;
 
                     lookOffset = Vector2.Lerp(lookOffset, Vector2.zero, freelook.resetSpeed * d);
-                    cam.transform.localRotation = Quaternion.Euler(lookOffset.y, lookOffset.x, 0);
+                    baseCamera.transform.localRotation = Quaternion.Euler(lookOffset.y, lookOffset.x, 0);
                 }
             }
 
@@ -2341,6 +2329,8 @@ namespace Fujin.Movement
                     movementState != MovementState.Grappling)
                     EndGrapple(); // clean up
             }
+
+            #endregion Additional Movement
         }
 
         #endregion Actions
@@ -2351,7 +2341,7 @@ namespace Fujin.Movement
         /// Handle Collisions
         /// Checks and handles the collisions status for the player motor. <remarks>Should not be called Update.</remarks>
         /// </summary>
-        void HandleCollisions()
+        void CheckCollisions()
         {
             CheckGround();
             CheckHeight();
@@ -2480,6 +2470,8 @@ namespace Fujin.Movement
                 numJumps = jump.doubleJump.amount;
                 canApplyWallstick = true;
                 applyWallstick = false;
+                climb.collider = null;
+                wallrun.collider = null;
 
                 if (jump.enable)
                     StopJumpGraceCoroutine();
@@ -2633,13 +2625,12 @@ namespace Fujin.Movement
             {
                 if (Physics.Raycast(castOrigin, castDirection, out hit, range, collisionExclusionMask, QueryTriggerInteraction.Ignore))
                 {
-                    if (CheckBoundingBox(hit.point - range * castDirection))
-                    {
-                        onWall = true;
-                        wallNormal = hit.normal;
-                        wallCollider = hit.collider;
+                    if (!CheckBoundingBox(hit.point - range * castDirection))
                         break;
-                    }
+
+                    onWall = true;
+                    wallNormal = hit.normal;
+                    wallCollider = hit.collider;
                 }
 
                 degrees += 15;
@@ -2942,8 +2933,8 @@ namespace Fujin.Movement
                         * (1 + ((effects.camera.dynamicFOV.multiplier - 1)
                         * (speed - movement.speed) / diff));
 
-                float fov = Mathf.Lerp(cam.fieldOfView, targetFov, 5 * d);
-                cam.fieldOfView = fov;
+                float fov = Mathf.Lerp(baseCamera.fieldOfView, targetFov, 5 * d);
+                baseCamera.fieldOfView = fov;
             }
             #endregion FOV
         }
@@ -3056,12 +3047,12 @@ namespace Fujin.Movement
 
                 targetLookPosition =
                     new Vector3(
-                    Mathf.Clamp(-lookInputs.x * effects.sway.lookOffset.x, -effects.sway.lookOffset.x, effects.sway.lookOffset.x),
-                    Mathf.Clamp(-lookInputs.y * effects.sway.lookOffset.y, -effects.sway.lookOffset.y, effects.sway.lookOffset.y), 0);
+                    Mathf.Clamp(-mouseDelta.x * effects.sway.lookOffset.x, -effects.sway.lookOffset.x, effects.sway.lookOffset.x),
+                    Mathf.Clamp(-mouseDelta.y * effects.sway.lookOffset.y, -effects.sway.lookOffset.y, effects.sway.lookOffset.y), 0);
                 targetLookRotation =
                     new Vector3(
-                        Mathf.Clamp(effects.sway.lookOffset.y - lookInputs.y * effects.sway.lookTilt.y, -effects.sway.lookTilt.y, effects.sway.lookTilt.y), 0,
-                        Mathf.Clamp(-lookInputs.x * effects.sway.lookTilt.x, -effects.sway.lookTilt.x, effects.sway.lookTilt.x));
+                        Mathf.Clamp(effects.sway.lookOffset.y - mouseDelta.y * effects.sway.lookTilt.y, -effects.sway.lookTilt.y, effects.sway.lookTilt.y), 0,
+                        Mathf.Clamp(-mouseDelta.x * effects.sway.lookTilt.x, -effects.sway.lookTilt.x, effects.sway.lookTilt.x));
 
                 // Move Sway
                 Vector3 targetMovePosition;
@@ -3456,7 +3447,7 @@ namespace Fujin.Movement
         IEnumerator YieldExitWallRunTime()
         {
             yield return new WaitForSeconds(wallrun.duration);
-            ExitWallRun();
+            LeaveWall();
         }
 
         #endregion Coroutines

@@ -1051,6 +1051,12 @@ namespace Fujin.Editor
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(margin);
+                    module.pushForce = EditorGUILayout.FloatField("Wall Run Push Force", Mathf.Max(module.pushForce, 0));
+                    GUILayout.Space(margin);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(margin);
                     module.boost = EditorGUILayout.FloatField("Wall Run Speed Boost", Mathf.Max(module.boost, 0));
                     GUILayout.Space(margin);
                     GUILayout.EndHorizontal();

@@ -367,6 +367,7 @@ namespace Fujin.Movement
         public float accelaration;
         public float decelleration;
         public float breakSpeed;
+        public float pushForce;
         public float boost;
         public float drag;
         public float minHeight;

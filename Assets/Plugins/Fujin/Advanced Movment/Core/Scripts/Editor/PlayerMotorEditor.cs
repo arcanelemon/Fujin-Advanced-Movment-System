@@ -44,6 +44,7 @@ namespace Fujin.Editor
         SerializedProperty inputProperty;
         SerializedProperty physicsProperty;
         SerializedProperty cameraContainer;
+        SerializedProperty baseCamera;
         SerializedProperty interactProperty;
         SerializedProperty movementProperty;
         SerializedProperty jumpProperty;
@@ -81,6 +82,7 @@ namespace Fujin.Editor
             inputProperty = serializedObject.FindProperty("input");
             physicsProperty = serializedObject.FindProperty("physics");
             cameraContainer = serializedObject.FindProperty("cameraContainer");
+            baseCamera = serializedObject.FindProperty("baseCamera");
             interactProperty = serializedObject.FindProperty("interact");
             movementProperty = serializedObject.FindProperty("movement");
             jumpProperty = serializedObject.FindProperty("jump");
@@ -250,7 +252,7 @@ namespace Fujin.Editor
                         GUILayout.BeginHorizontal();
                         GUILayout.Space(margin);
                         GUILayout.Label("Look Sensitivity");
-                        inputModule.lookSensitivity = EditorGUILayout.Slider(inputModule.lookSensitivity, 0.01f, 2);
+                        inputModule.lookSensitivity = EditorGUILayout.Slider((float)Math.Round(inputModule.lookSensitivity, 1), .1f, 10f);
                         GUILayout.Space(margin);
                         GUILayout.EndHorizontal();
 
@@ -769,6 +771,12 @@ namespace Fujin.Editor
             GUILayout.BeginHorizontal();
             GUILayout.Space(margin);
             EditorGUILayout.PropertyField(cameraContainer);
+            GUILayout.Space(margin);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(margin);
+            EditorGUILayout.PropertyField(baseCamera);
             GUILayout.Space(margin);
             GUILayout.EndHorizontal();
 
